@@ -1,0 +1,22 @@
+# --- System Files ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- VS Code & Editor Settings ---
+.vscode/
+*.code-workspace
+project.config
+
+# --- Tiled (Map Editor) Junk ---
+# Wir wollen .json, .tmx, .tsx und .png behalten!
+# Aber wir wollen KEINE Session-Dateien oder Backups.
+*.tiled-session
+*.tiled-project
+*.bak
+backup/
+
+# --- Node Modules (Falls du später npm nutzt) ---
+node_modules/
+package-lock.json
+dist/
