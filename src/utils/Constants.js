@@ -8,8 +8,8 @@ export const BOT_STATE = {
 
 export const PHYSICS_CONFIG = {
     PLAYER_SPEED: 150,
-    BOT_PATROL_SPEED: 80,
-    BOT_CHASE_SPEED: 160,
+    BOT_PATROL_SPEED: 50,
+    BOT_CHASE_SPEED: 120,
     VISION_RANGE: 250,
     VISION_ANGLE: 70
 };
