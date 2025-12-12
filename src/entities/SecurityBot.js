@@ -1,6 +1,5 @@
 import { BOT_STATE, PHYSICS_CONFIG, DEPTH } from '../utils/Constants.js';
 
-// Setze dies auf false, um die grünen/roten Hilfslinien auszublenden
 const SHOW_DEBUG = true;
 
 export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
@@ -14,30 +13,36 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
         this.setCollideWorldBounds(true);
         this.setDepth(DEPTH.ENTITIES);
 
-        // --- HITBOX ---
-        this.body.setSize(12, 12);   
-        this.body.setOffset(10, 20); 
+        // --- HITBOX OPTIMIERUNG ---
+        // Eine runde/kleinere Hitbox verhindert das Hängenbleiben an Ecken
+        this.body.setCircle(6, 10, 16); 
 
         // State & Path
         this.state = BOT_STATE.PATROL;
         this.path = path || [];
         this.pathIndex = 0; 
         
-        // Timer für State-Wechsel (z.B. beim Suchen), aber nicht mehr fürs Patrouillieren
-        this.stateTimer = null; 
+        // --- BREADCRUMB SYSTEM ---
+        this.breadcrumbs = []; 
+        this.lastBreadcrumbPos = { x: x, y: y };
+        
+        // Anti-Jitter & Stuck Variablen
+        this.stagnationTimer = 0;     
+        this.lastDistanceToTarget = 9999; 
+        // -------------------------
 
+        this.stateTimer = null; 
         this.target = scene.player; 
         this.blockingLayers = blockingLayers || []; 
         this.lastKnownLocation = null;
-
-        // Anti-Stuck
-        this.lastPosition = { x: x, y: y };
-        this.stuckTimer = 0;
 
         // Debug
         if (SHOW_DEBUG) {
             this.debugGraphic = scene.add.graphics();
             this.debugGraphic.setDepth(DEPTH.UI);
+            this.debugText = scene.add.text(x, y - 40, '', { 
+                fontSize: '10px', fill: '#00ff00', backgroundColor: '#00000088' 
+            }).setDepth(DEPTH.UI);
         }
 
         this.initAnimations();
@@ -62,93 +67,102 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
         
-        if (SHOW_DEBUG) this.drawDebug();
+        if (SHOW_DEBUG) this.updateDebugInfo();
 
         if (!this.target) return;
 
-        // Vision wieder aktivieren!
         this.checkVision(); 
-        
-        this.updateStateMachine();
+        this.updateStateMachine(time, delta);
         this.updateAnimation();
+    }
+
+    // --- ROBUSTE BEWEGUNG (ANTI-JITTER FIX) ---
+    moveAndCheckArrival(targetX, targetY, speed, radius, delta) {
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, targetX, targetY);
+
+        // 1. OVERSHOOT PREVENTION (Das verhindert das Zittern)
+        // Wir berechnen, wie weit wir uns diesen Frame bewegen würden (Pixel)
+        // delta ist in ms, speed in px/sec. -> (delta / 1000) * speed
+        const stepDistance = (speed * delta) / 1000;
+
+        // Wenn wir näher sind als ein Schritt, schnappen wir direkt zum Ziel
+        if (dist < stepDistance || dist <= radius) {
+            this.body.reset(targetX, targetY); // Physik Reset auf Position
+            this.stagnationTimer = 0;
+            this.lastDistanceToTarget = 9999;
+            return true; // Angekommen
+        } 
+
+        // 2. STAGNATION CHECK (Anti-Wall-Stuck)
+        // Wir prüfen, ob wir trotz Bewegung nicht näher kommen
+        const improvement = this.lastDistanceToTarget - dist;
         
-        // Nur prüfen wenn er sich wirklich bewegen soll
-        if (this.state === BOT_STATE.PATROL) {
-            this.checkIfStuck(time);
+        // Wenn Verbesserung kleiner als 0.2px ist, zählen wir hoch
+        if (Math.abs(improvement) < 0.2) {
+            this.stagnationTimer += delta;
+        } else {
+            this.stagnationTimer = Math.max(0, this.stagnationTimer - delta);
         }
-    }
 
-    drawDebug() {
-        if (!this.debugGraphic) return;
-        this.debugGraphic.clear();
-        this.debugGraphic.lineStyle(1, 0x00ff00, 1);
-        this.debugGraphic.strokeRect(this.body.x, this.body.y, this.body.width, this.body.height);
+        this.lastDistanceToTarget = dist;
 
-        if (this.state === BOT_STATE.PATROL && this.path.length > 0) {
-            const point = this.path[this.pathIndex];
-            this.debugGraphic.lineStyle(1, 0xff0000, 0.8);
-            this.debugGraphic.lineBetween(this.body.center.x, this.body.center.y, point.x, point.y);
+        // Timeout: Wenn wir 500ms lang feststecken, erzwingen wir "Angekommen", 
+        // damit die Logik zum nächsten Punkt springt.
+        if (this.stagnationTimer > 500) {
+            if (SHOW_DEBUG) console.log("⚠️ Stagnation! Skipping waypoint.");
+            this.stagnationTimer = 0;
+            this.lastDistanceToTarget = 9999;
+            return true; // Force Arrival
         }
+        
+        // Normale Bewegung
+        this.scene.physics.moveTo(this, targetX, targetY, speed);
+        return false; 
     }
 
-    destroy(fromScene) {
-        if (this.debugGraphic) this.debugGraphic.destroy();
-        super.destroy(fromScene);
-    }
-
-    checkIfStuck(time) {
-        if (time > this.stuckTimer) {
-            const dist = Phaser.Math.Distance.Between(this.body.x, this.body.y, this.lastPosition.x, this.lastPosition.y);
-            
-            // Wenn er hängt (fast 0 Bewegung), zum nächsten Punkt zwingen
-            if (dist < 2) {
-                this.nextPathPoint();
-            }
-            
-            this.lastPosition = { x: this.body.x, y: this.body.y };
-            this.stuckTimer = time + 1000;
-        }
-    }
-
-    updateStateMachine() {
+    updateStateMachine(time, delta) {
         switch (this.state) {
-            case BOT_STATE.PATROL: this.handlePatrol(); break;
+            case BOT_STATE.PATROL: this.handlePatrol(delta); break;
             case BOT_STATE.CHASE:  this.handleChase(); break;
             case BOT_STATE.SEARCH: this.handleSearch(); break;
+            case BOT_STATE.RETURN: this.handleReturn(time, delta); break; 
         }
     }
 
-    // --- NEUE, VEREINFACHTE PATROUILLE ---
-    handlePatrol() {
+    handlePatrol(delta) {
         if (!this.path || this.path.length === 0) return;
-        
+        // Breadcrumbs löschen, wenn wir sicher patrouillieren
+        if (this.breadcrumbs.length > 0) this.breadcrumbs = [];
+
         const targetPoint = this.path[this.pathIndex];
         
-        // Distanz zur Mitte der Hitbox
-        const dist = Phaser.Math.Distance.Between(this.body.center.x, this.body.center.y, targetPoint.x, targetPoint.y);
+        // Radius 2px ist okay dank Overshoot-Fix
+        const arrived = this.moveAndCheckArrival(targetPoint.x, targetPoint.y, PHYSICS_CONFIG.BOT_PATROL_SPEED, 2, delta);
 
-        // Wenn nah genug (5px Toleranz), SOFORT nächstes Ziel wählen.
-        // Kein Stop, kein Reset, kein Warten -> Keine Bugs.
-        if (dist < 5) {
+        if (arrived) {
             this.nextPathPoint();
-        } else {
-            this.scene.physics.moveTo(this, targetPoint.x, targetPoint.y, PHYSICS_CONFIG.BOT_PATROL_SPEED);
         }
     }
 
     nextPathPoint() {
         this.pathIndex = (this.pathIndex + 1) % this.path.length;
+        this.stagnationTimer = 0;
+        this.lastDistanceToTarget = 9999;
     }
 
     handleChase() {
         this.clearStateTimer();
+        this.dropBreadcrumb(); 
+        // MoveToObject hat kein Jitter-Fix, ist aber bei Chase okay, da sich Target bewegt
         this.scene.physics.moveToObject(this, this.target, PHYSICS_CONFIG.BOT_CHASE_SPEED);
     }
 
     handleSearch() {
         this.clearStateTimer();
+        this.dropBreadcrumb(); 
+        
         if (!this.lastKnownLocation) { 
-            this.state = BOT_STATE.PATROL; 
+            this.startReturn(); 
             return; 
         }
 
@@ -157,14 +171,79 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
         if (dist < 10) {
             this.setVelocity(0, 0);
             this.lastKnownLocation = null;
-            
-            // Hier nutzen wir einen Timer, weil er sich ja "umschaut"
+            // Kurze Pause, dann Rückweg
             this.stateTimer = this.scene.time.delayedCall(1500, () => { 
-                this.state = BOT_STATE.PATROL; 
+                this.startReturn(); 
             }, [], this);
         } else {
             this.scene.physics.moveTo(this, this.lastKnownLocation.x, this.lastKnownLocation.y, PHYSICS_CONFIG.BOT_PATROL_SPEED);
         }
+    }
+
+    dropBreadcrumb() {
+        const dist = Phaser.Math.Distance.Between(this.x, this.y, this.lastBreadcrumbPos.x, this.lastBreadcrumbPos.y);
+        
+        // Alle 40px einen Punkt setzen
+        if (dist > 40) {
+            // Tile Snapping (auf Mitte des 16er Grids runden)
+            const snapX = Math.floor(this.x / 16) * 16 + 8;
+            const snapY = Math.floor(this.y / 16) * 16 + 8;
+
+            this.breadcrumbs.push({ x: snapX, y: snapY });
+            this.lastBreadcrumbPos = { x: this.x, y: this.y };
+        }
+    }
+
+    startReturn() {
+        this.state = BOT_STATE.RETURN;
+        this.stagnationTimer = 0; 
+        this.lastDistanceToTarget = 9999;
+        
+        // Optimierung: Den aktuellen Pfad umkehren oder bereinigen?
+        // Aktuell laufen wir den Stack einfach rückwärts ab (LIFO - Last In First Out)
+    }
+
+    handleReturn(time, delta) {
+        // Wenn keine Brotkrumen mehr da sind, finden wir den Patrouillenweg wieder
+        if (this.breadcrumbs.length === 0) {
+            this.state = BOT_STATE.PATROL;
+            this.findResumePatrolPoint();
+            return;
+        }
+
+        // Ziel ist der letzte Punkt im Array
+        let nextTarget = this.breadcrumbs[this.breadcrumbs.length - 1];
+        
+        // Toleranz 4px
+        const arrived = this.moveAndCheckArrival(nextTarget.x, nextTarget.y, PHYSICS_CONFIG.BOT_PATROL_SPEED, 4, delta);
+
+        if (arrived) {
+            this.breadcrumbs.pop(); // Punkt entfernen
+            this.stagnationTimer = 0;
+            this.lastDistanceToTarget = 9999;
+        }
+    }
+
+    // --- LOGIK FIX: FLIESSENDER ÜBERGANG ZUR PATROUILLE ---
+    findResumePatrolPoint() {
+        if (!this.path || this.path.length === 0) return;
+
+        let closestDist = Infinity;
+        let closestIndex = 0;
+
+        // 1. Finde den absolut nächsten Punkt
+        this.path.forEach((point, index) => {
+            const dist = Phaser.Math.Distance.Between(this.x, this.y, point.x, point.y);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closestIndex = index;
+            }
+        });
+
+        // 2. TRICK: Gehe nicht zum nächsten Punkt (Rückschrittgefahr), 
+        // sondern zum DARAUFFOLGENDEN Punkt im Zyklus.
+        // Das sorgt für Vorwärtsfluss ("Forward Momentum").
+        this.pathIndex = (closestIndex + 1) % this.path.length;
     }
 
     clearStateTimer() {
@@ -177,15 +256,17 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
     checkVision() {
         const dist = Phaser.Math.Distance.Between(this.x, this.y, this.target.x, this.target.y);
 
+        // Distanz-Check
         if (dist > PHYSICS_CONFIG.VISION_RANGE) {
-            if (this.state !== BOT_STATE.SEARCH) this.state = BOT_STATE.PATROL;
+            if (this.state === BOT_STATE.CHASE) this.state = BOT_STATE.SEARCH;
             return;
         }
 
+        // Winkel-Check
         const angleToTarget = Phaser.Math.Angle.Between(this.x, this.y, this.target.x, this.target.y);
         let currentRotation = this.rotation;
         
-        // Rotation nur aktualisieren wenn er sich bewegt, damit er nicht "snappt"
+        // Rotation aus Velocity berechnen, falls wir uns bewegen
         if (this.body.speed > 10) {
             currentRotation = Math.atan2(this.body.velocity.y, this.body.velocity.x);
         }
@@ -193,17 +274,19 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
         const angleDiff = Math.abs(Phaser.Math.Angle.Wrap(angleToTarget - currentRotation));
         
         if (angleDiff >= Phaser.Math.DEG_TO_RAD * (PHYSICS_CONFIG.VISION_ANGLE / 2)) {
+            // Außerhalb des Sichtkegels
             if (this.state === BOT_STATE.CHASE) this.state = BOT_STATE.SEARCH;
             return;
         }
         
+        // Raycast (Line of Sight)
         const line = new Phaser.Geom.Line(this.x, this.y, this.target.x, this.target.y);
         let isObstructed = false;
         
         for (let layer of this.blockingLayers) {
             if (!layer) continue;
-            // Nur Kollisions-Tiles blockieren die Sicht
             const tiles = layer.getTilesWithinShape(line);
+            // Check collision prop oder index
             if (tiles.some(tile => (tile.index > 0 && tile.collides))) { 
                 isObstructed = true; 
                 break; 
@@ -211,15 +294,23 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
         }
 
         if (!isObstructed) {
+            // Spieler gesehen!
             this.state = BOT_STATE.CHASE;
             this.lastKnownLocation = { x: this.target.x, y: this.target.y };
+            
+            // Wenn wir patrouillieren oder zurückkehren und den Spieler sehen,
+            // resetten wir die Brotkrumen, damit der neue Weg zählt.
+            if (this.state === BOT_STATE.RETURN || this.state === BOT_STATE.PATROL) {
+                this.breadcrumbs = [];
+                this.lastBreadcrumbPos = { x: this.x, y: this.y };
+            }
         } else if (this.state === BOT_STATE.CHASE) {
+            // Sichtlinie unterbrochen -> Suche starten
             this.state = BOT_STATE.SEARCH;
         }
     }
 
     updateAnimation() {
-        // Toleranz für "Idle" erhöht, damit er nicht flackert wenn er langsam ist
         if (this.body.speed < 10) {
             if (this.anims.currentAnim && this.anims.currentAnim.key.includes('walk')) {
                  this.play('bot-idle-down', true);
@@ -237,5 +328,57 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
             if (vy > 0) this.play('bot-walk-down', true);
             else this.play('bot-walk-up', true);
         }
+    }
+
+    updateDebugInfo() {
+        if (!this.debugGraphic || !this.debugText) return;
+        
+        this.debugGraphic.clear();
+        
+        // Hitbox anzeigen
+        this.debugGraphic.lineStyle(1, 0x00ff00, 1);
+        if (this.body.isCircle) {
+            this.debugGraphic.strokeCircle(this.body.x + this.body.width/2, this.body.y + this.body.height/2, this.body.halfWidth);
+        } else {
+            this.debugGraphic.strokeRect(this.body.x, this.body.y, this.body.width, this.body.height);
+        }
+
+        this.debugText.setPosition(this.x - 20, this.y - 50);
+        
+        let targetX = 0, targetY = 0;
+        let dist = 0;
+
+        if (this.state === BOT_STATE.PATROL && this.path.length > 0) {
+            const p = this.path[this.pathIndex];
+            targetX = p.x; targetY = p.y;
+        } else if (this.state === BOT_STATE.RETURN && this.breadcrumbs.length > 0) {
+            const p = this.breadcrumbs[this.breadcrumbs.length - 1];
+            targetX = p.x; targetY = p.y;
+        }
+
+        if (targetX !== 0) {
+            dist = Phaser.Math.Distance.Between(this.body.center.x, this.body.center.y, targetX, targetY);
+            this.debugGraphic.lineStyle(1, 0xff0000, 0.8);
+            this.debugGraphic.lineBetween(this.body.center.x, this.body.center.y, targetX, targetY);
+            this.debugGraphic.fillStyle(0xff0000, 1);
+            this.debugGraphic.fillCircle(targetX, targetY, 3);
+        }
+
+        this.debugText.setText(
+            `State: ${this.state}\n` +
+            `Stag: ${Math.floor(this.stagnationTimer)}\n` +
+            `Dist: ${dist.toFixed(1)}`
+        );
+
+        if (this.breadcrumbs.length > 0) {
+            this.debugGraphic.fillStyle(0x0000ff, 0.5);
+            this.breadcrumbs.forEach(p => this.debugGraphic.fillCircle(p.x, p.y, 2));
+        }
+    }
+
+    destroy(fromScene) {
+        if (this.debugGraphic) this.debugGraphic.destroy();
+        if (this.debugText) this.debugText.destroy();
+        super.destroy(fromScene);
     }
 }

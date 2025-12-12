@@ -2,6 +2,7 @@ export const BOT_STATE = {
     PATROL: 'patrol',
     CHASE: 'chase',
     SEARCH: 'search',
+    RETURN: 'return',
     IDLE: 'idle'
 };
 
