@@ -1,5 +1,7 @@
 import { PreloadScene } from './scenes/PreloadScene.js';
 import { GameScene } from './scenes/GameScene.js';
+import { UIScene } from './scenes/UIScene.js';
+
 
 const config = {
     type: Phaser.AUTO,
@@ -13,11 +15,11 @@ const config = {
     physics: { 
         default: 'arcade', 
         arcade: { 
-            debug: true, // Auf false setzen für Release
+            debug: false, // Auf false setzen für Release
             gravity: { y: 0 }
         } 
     },
-    scene: [PreloadScene, GameScene], 
+    scene: [PreloadScene, GameScene, UIScene], 
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
 };
 

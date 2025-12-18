@@ -22,3 +22,17 @@ export const DEPTH = {
     DECO_HIGH: 10,
     UI: 100
 };
+
+export const KEY_CONFIG = {
+    '1': { color: 0xFF0000, name: 'Red Access' },    // Rot
+    '2': { color: 0x0000FF, name: 'Blue Access' },   // Blau
+    '3': { color: 0x00FF00, name: 'Green Access' },  // Grün
+    '4': { color: 0xFFFF00, name: 'Yellow Access' }, // Gelb
+    'default': { color: 0xFFFFFF, name: 'Master Key' }
+};
+
+export const UI_CONFIG = {
+    INV_START_X: 20,
+    INV_START_Y: 550,
+    INV_GAP: 40       
+};
