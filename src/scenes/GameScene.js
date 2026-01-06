@@ -2,6 +2,7 @@ import { Player } from '../entities/Player.js';
 import { SecurityBot } from '../entities/SecurityBot.js';
 import { KeyItem } from '../entities/KeyItem.js';
 import { Door } from '../entities/Door.js';
+import { Computer } from '../entities/Computer.js'; // NEU IMPORTIERT
 import { Inventory } from '../systems/Inventory.js';
 import { DEPTH } from '../utils/Constants.js';
 
@@ -12,13 +13,12 @@ export class GameScene extends Phaser.Scene {
 
     create() {
         this.createMap();
-        this.createPlayer(); // Inventar wird hier erstellt
+        this.createPlayer(); 
         this.createEnemies();
         this.createInteractables(); 
         this.createCollisions();
         this.createCamera();
         
-        // UI Text oben links (optional, falls du Koordinaten noch willst, sonst löschen)
         this.coordText = this.add.text(10, 10, '', { 
             fontSize: '12px', fill: '#FFF', stroke: '#000', strokeThickness: 2 
         }).setScrollFactor(0).setDepth(DEPTH.UI);
@@ -27,15 +27,17 @@ export class GameScene extends Phaser.Scene {
     update(time, delta) {
         if (this.player) {
             this.player.update();
-            // Koordinaten update (optional)
-            // this.coordText.setText(`Pos: ${Math.floor(this.player.x)}, ${Math.floor(this.player.y)}`);
+        }
+        
+        // NEU: Updates für alle Computer aufrufen (für das "E" Prompt)
+        if (this.computersGroup) {
+            this.computersGroup.getChildren().forEach(pc => pc.update());
         }
     }
 
     createMap() {
         this.map = this.make.tilemap({ key: 'mainMap' }); 
         
-        // Achte darauf, dass hier der exakte Name aus Tiled steht!
         const allTilesets = [
             this.map.addTilesetImage('walls_floor', 'walls_floor_img'),
             this.map.addTilesetImage('Room_Builder_Office_16x16', 'office_img'),
@@ -45,7 +47,6 @@ export class GameScene extends Phaser.Scene {
 
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
-        // Layer Setup (Panzer-Lösung)
         this.floorLayer = this.map.createLayer('Boden', allTilesets, 0, 0).setDepth(0);
         
         this.wallsLayer = this.map.createLayer('Walls', allTilesets, 0, 0).setDepth(1);
@@ -71,6 +72,7 @@ export class GameScene extends Phaser.Scene {
     createInteractables() {
         this.keysGroup = this.add.group();
         this.doorsGroup = this.add.group();
+        this.computersGroup = this.add.group(); // NEUE GRUPPE
 
         const interactableLayer = this.map.getObjectLayer('Interactables');
         if (!interactableLayer) return;
@@ -81,26 +83,36 @@ export class GameScene extends Phaser.Scene {
 
             let x = obj.x;
             let y = obj.y;
-            const objType = obj.class || obj.type || "";
+            // Type/Class aus Tiled lesen (toLowerCase für Sicherheit)
+            const objType = (obj.class || obj.type || "").toLowerCase();
 
-            if (obj.gid) { // Grafik Objekte
+            if (obj.gid) { // Grafik Objekte (Insert Tile)
                 x += obj.width / 2;
                 y -= obj.height / 2;
 
                 if (objType === 'key') {
-                    // Wir nutzen das Standard-Key Item, Grafik wird ignoriert/überschrieben
                     const keyID = props.keyID || 'unknown_key';
                     const keyItem = new KeyItem(this, x, y, keyID);
                     this.keysGroup.add(keyItem);
                 }
+                // NEU: Auch Tile-Objekte können Computer sein
+                else if (objType === 'computer') {
+                    const pc = new Computer(this, x, y, props, obj.width, obj.height);
+                    this.computersGroup.add(pc);
+                }
             } 
-            else { // Shape Objekte
+            else { // Shape Objekte (Rechtecke)
                 x += obj.width / 2;
                 y += obj.height / 2;
 
                 if (objType === 'door') {
                     const door = new Door(this, x, y, props, obj.width, obj.height);
                     this.doorsGroup.add(door);
+                }
+                // NEU: Shape-Objekte können Computer sein (Interaktions-Zonen)
+                else if (objType === 'computer') {
+                    const pc = new Computer(this, x, y, props, obj.width, obj.height);
+                    this.computersGroup.add(pc);
                 }
             }
         });
@@ -121,7 +133,6 @@ export class GameScene extends Phaser.Scene {
                 .map(p => ({ x: p.x, y: p.y }));
         };
 
-        // Beispiel-Pfade (muss zu deinen Waypoints passen)
         const path1 = getPath([1, 2, 3, 4]); 
         const path2 = getPath([5, 6, 7, 8]);
         
@@ -139,6 +150,10 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.keysGroup, (player, keyItem) => keyItem.collect(player));
         this.physics.add.collider(this.player, this.doorsGroup, (player, door) => door.tryOpen(player));
         this.physics.add.collider(this.bots, this.doorsGroup);
+        
+        // Computer brauchen keine physische Kollision (wir machen das über Distanz im update),
+        // aber wenn du willst, dass man nicht durchlaufen kann, aktiviere dies:
+        // this.physics.add.collider(this.player, this.computersGroup);
     }
 
     createCamera() {
