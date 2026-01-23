@@ -4,6 +4,7 @@ import { SecurityBot } from '../entities/SecurityBot.js';
 import { KeyItem } from '../entities/KeyItem.js';
 import { Door } from '../entities/Door.js';
 import { Inventory } from '../systems/Inventory.js';
+import { LightingSystem } from '../systems/LightingSystem.js';
 import { DEPTH } from '../utils/Constants.js';
 
 export class GameScene extends Phaser.Scene {
@@ -18,9 +19,21 @@ export class GameScene extends Phaser.Scene {
         this.createInteractables(); 
         this.createCollisions();
         this.createCamera();
+        this.createLighting(); // NEW: Atmospheric lighting
         
         // UI Text oben links für Debugging
         // Debug Mode entfernt auf User-Wunsch
+        
+        // Cleanup listener for scene shutdown/restart
+        this.events.on('shutdown', this.shutdown, this);
+        this.events.on('destroy', this.shutdown, this);
+    }
+    
+    shutdown() {
+        if (this.lightingSystem) {
+            this.lightingSystem.destroy();
+            this.lightingSystem = null;
+        }
     }
 
     update(time, delta) {
@@ -28,6 +41,10 @@ export class GameScene extends Phaser.Scene {
             this.player.update();
             // Zeigt Koordinaten an - extrem hilfreich um die Stelle in Tiled zu finden!
             // if (this.coordText) { ... }
+        }
+        
+        if (this.lightingSystem) {
+            this.lightingSystem.update();
         }
     }
 
@@ -53,13 +70,13 @@ export class GameScene extends Phaser.Scene {
         // REVERT TO BLACKLIST (Temporary Fix):
         // The user's map export does NOT yet contain the "collides" property on tiles.
         // To ensure the game is playable NOW, we revert to excluding the known empty tiles (72, 75).
-        this.wallsLayer.setCollisionByExclusion([-1, 0, 72, 75]); 
+        this.wallsLayer.setCollisionByExclusion([-1, 0, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80]); 
         // this.wallsLayer.setCollisionByProperty({ collides: true }); 
         
         // 3. Decoration (Tische etc. - Auch Kollision)
         this.decoLayer = this.map.createLayer('Decoration', allTilesets, 0, 0).setDepth(5);
         // Also revert decoration to blacklist
-        this.decoLayer.setCollisionByExclusion([-1, 0, 72, 75]); 
+        this.decoLayer.setCollisionByExclusion([-1, 0, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80]); 
         // this.decoLayer.setCollisionByProperty({ collides: true }); 
 
         // 4. Topwall (DACH DER WÄNDE - KEINE KOLLISION, ABER HOHE TIEFE)
@@ -146,11 +163,28 @@ export class GameScene extends Phaser.Scene {
                 .map(p => ({ x: p.x, y: p.y }));
         };
 
-        const path1 = getPath([1, 2, 3, 4]); 
-        const path2 = getPath([5, 6, 7, 8]);
+        // Bot 1: 1→2→3→4→5→1 (Kreis)
+        const path1 = getPath([1, 2, 3, 4, 5]); 
+        
+        // Bot 2: 6→7→8→9→6 (Kreis)
+        const path2 = getPath([6, 7, 8, 9]);
+        
+        // Bot 3: 10→11→...→22 und zurück (Ping-Pong)
+        const path3Forward = getPath([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]);
+        const path3Backward = [...path3Forward].reverse().slice(1, -1); // 21→20→...→11
+        const path3 = [...path3Forward, ...path3Backward];
+        
+        // Bot 4: 23→24→23 (Ping-Pong)
+        const path4 = getPath([23, 24, 23]);
+        
+        // Bot 5: 25→26→27→28→29→25 (Kreis)
+        const path5 = getPath([25, 26, 27, 28, 29]);
         
         if (path1.length > 0) this.bots.add(new SecurityBot(this, path1[0].x, path1[0].y, path1, blockingLayers));
         if (path2.length > 0) this.bots.add(new SecurityBot(this, path2[0].x, path2[0].y, path2, blockingLayers));
+        if (path3.length > 0) this.bots.add(new SecurityBot(this, path3[0].x, path3[0].y, path3, blockingLayers));
+        if (path4.length > 0) this.bots.add(new SecurityBot(this, path4[0].x, path4[0].y, path4, blockingLayers));
+        if (path5.length > 0) this.bots.add(new SecurityBot(this, path5[0].x, path5[0].y, path5, blockingLayers));
     }
 
     createCollisions() {
@@ -172,5 +206,9 @@ export class GameScene extends Phaser.Scene {
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
         // Zoom increased even further to focus entirely on one room
         this.cameras.main.setZoom(4.5);
+    }
+
+    createLighting() {
+        this.lightingSystem = new LightingSystem(this, this.player);
     }
 }

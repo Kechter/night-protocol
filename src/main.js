@@ -20,7 +20,10 @@ const config = {
     width: Config.width, 
     height: Config.height,
     backgroundColor: '#111', 
-    render: { pixelArt: true },
+    render: { 
+        pixelArt: true,
+        antialias: false
+    },
     canvasContext: { willReadFrequently: true },
     physics: { 
         default: 'arcade', 

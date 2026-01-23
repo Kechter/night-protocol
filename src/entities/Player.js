@@ -15,6 +15,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.scene = scene;
         this.cursors = scene.input.keyboard.createCursorKeys();
+        
+        // Add WASD keys
+        this.wasd = {
+            W: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.W),
+            A: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A),
+            S: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.S),
+            D: scene.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
+        };
 
         this.initAnimations();
 
@@ -49,22 +57,22 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(0);
         let isMoving = false;
 
-        // Horizontale Bewegung
-        if (this.cursors.left.isDown) {
+        // Horizontal movement (Arrow keys OR WASD)
+        if (this.cursors.left.isDown || this.wasd.A.isDown) {
             this.setVelocityX(-speed);
             this.setFlipX(true);
             isMoving = true;
-        } else if (this.cursors.right.isDown) {
+        } else if (this.cursors.right.isDown || this.wasd.D.isDown) {
             this.setVelocityX(speed);
             this.setFlipX(false);
             isMoving = true;
         }
 
-        // Vertikale Bewegung
-        if (this.cursors.up.isDown) {
+        // Vertical movement (Arrow keys OR WASD)
+        if (this.cursors.up.isDown || this.wasd.W.isDown) {
             this.setVelocityY(-speed);
             isMoving = true;
-        } else if (this.cursors.down.isDown) {
+        } else if (this.cursors.down.isDown || this.wasd.S.isDown) {
             this.setVelocityY(speed);
             isMoving = true;
         }

@@ -21,8 +21,11 @@ export class SlidePuzzleScene extends Phaser.Scene {
     }
 
     create() {
-        this.add.rectangle(400, 300, 800, 600, 0x000000, 0.9);
-        this.container = this.add.container(400, 300);
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+
+        this.add.rectangle(centerX, centerY, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.9);
+        this.container = this.add.container(centerX, centerY);
 
         const bg = this.add.rectangle(0, 0, 400, 450, 0x222222).setStrokeStyle(4, 0x00ff00);
         this.container.add(bg);

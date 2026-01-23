@@ -25,8 +25,11 @@ export class SignalTuningScene extends Phaser.Scene {
     }
 
     create() {
-        this.add.rectangle(400, 300, 800, 600, 0x000000, 0.9);
-        this.container = this.add.container(400, 300);
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+
+        this.add.rectangle(centerX, centerY, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.9);
+        this.container = this.add.container(centerX, centerY);
 
         const bg = this.add.rectangle(0, -50, 600, 300, 0x001100).setStrokeStyle(4, 0x00aa00);
         this.container.add(bg);

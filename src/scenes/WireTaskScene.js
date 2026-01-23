@@ -22,10 +22,13 @@ export class WireTaskScene extends Phaser.Scene {
     }
 
     create() {
-        // 1. Hintergrund (Dunkelgraues Panel)
-        this.add.rectangle(400, 300, 800, 600, 0x000000, 0.8); // Dimmer
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+
+        // 1. Hintergrund (Dunkelgraues Panel - Fullscreen)
+        this.add.rectangle(centerX, centerY, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.8); 
         
-        const panel = this.add.container(400, 300);
+        const panel = this.add.container(centerX, centerY);
         const bg = this.add.rectangle(0, 0, 500, 400, 0x2c3e50).setStrokeStyle(4, 0x95a5a6);
         panel.add(bg);
 
@@ -126,9 +129,11 @@ export class WireTaskScene extends Phaser.Scene {
 
     updateActiveLine(pointer) {
         // Mausposition ins Panel-Koordinatensystem umrechnen
-        // Panel ist bei 400, 300 zentriert
-        const localX = pointer.x - 400; 
-        const localY = pointer.y - 300;
+        // Panel ist zentriert
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+        const localX = pointer.x - centerX; 
+        const localY = pointer.y - centerY;
 
         this.redrawWires();
         
@@ -144,8 +149,10 @@ export class WireTaskScene extends Phaser.Scene {
         // Wir prüfen manuell Kollision, da dropZones manchmal tricky sind mit Layern
         // Pointer Position holen
         const pointer = this.input.activePointer;
-        const localX = pointer.x - 400; 
-        const localY = pointer.y - 300;
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+        const localX = pointer.x - centerX; 
+        const localY = pointer.y - centerY;
 
         let foundTarget = null;
 
@@ -197,8 +204,11 @@ export class WireTaskScene extends Phaser.Scene {
     }
 
     winGame() {
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+
         // Erfolgsnachricht
-        const successText = this.add.text(400, 300, 'SYSTEM RESTORED', {
+        const successText = this.add.text(centerX, centerY, 'SYSTEM RESTORED', {
             fontFamily: 'monospace', fontSize: '32px', color: '#00ff00', backgroundColor: '#000000'
         }).setOrigin(0.5).setPadding(10);
         

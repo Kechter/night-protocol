@@ -56,11 +56,14 @@ export class SimonSaysScene extends Phaser.Scene {
     }
 
     create() {
-        // 1. Halb-transparenter Hintergrund
-        this.add.rectangle(400, 300, 800, 600, 0x000000, 0.85);
+        const centerX = this.cameras.main.width / 2;
+        const centerY = this.cameras.main.height / 2;
+
+        // 1. Halb-transparenter Hintergrund (Fullscreen)
+        this.add.rectangle(centerX, centerY, this.cameras.main.width, this.cameras.main.height, 0x000000, 0.85);
 
         // 2. Container für das Minigame
-        this.container = this.add.container(400, 300);
+        this.container = this.add.container(centerX, centerY);
 
         // Hintergrund des Terminals (Vergrößert für 3x3)
         const bg = this.add.rectangle(0, 0, 340, 420, 0x222222).setStrokeStyle(4, 0x00ff00);

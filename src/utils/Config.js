@@ -5,6 +5,6 @@ export const Config = {
     debug: true, // Keep internal debug flag true for logic, visual debug is controlled in GameScene
     physics: {
         gravity: 0,
-        debug: true // Used to be true, but visual debug is manually removed in GameScene
+        debug: false // Visual debug disabled for production feel
     }
 };
