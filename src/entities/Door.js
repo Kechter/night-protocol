@@ -139,17 +139,27 @@ export class Door extends Phaser.GameObjects.Rectangle {
         this.isOpen = true;
         if (this.lockIcon) this.lockIcon.destroy();
 
-        const topLeftX = this.x - (this.width / 2);
-        const topLeftY = this.y - (this.height / 2);
-        const layer = this.scene.wallsLayer;
-        const startTile = layer.worldToTileXY(topLeftX, topLeftY);
-        const w = Math.ceil(this.width / 16);
-        const h = Math.ceil(this.height / 16);
-        for(let dx=0; dx < w; dx++) {
-            for(let dy=0; dy < h; dy++) {
-                layer.removeTileAt(startTile.x + dx, startTile.y + dy);
-            }
+        // 1. Disable Physics Body immediately
+        if (this.body) {
+            this.body.checkCollision.none = true;
+            this.body.enable = false;
+            this.scene.physics.world.remove(this.body);
         }
+
+        // 2. Remove Tiles and Tile Collision
+        // Use a slightly smaller area to avoid deleting adjacent walls if the door is tight
+        const layer = this.scene.wallsLayer;
+        const tiles = layer.getTilesWithinWorldXY(this.x - (this.width/2) + 2, this.y - (this.height/2) + 2, this.width - 4, this.height - 4);
+        
+        tiles.forEach(tile => {
+            if (tile && tile.index !== -1) {
+                layer.removeTileAt(tile.x, tile.y);
+                // Also explicitly disable collision on the empty tile spot just in case
+                tile.setCollision(false, false, false, false);
+            }
+        });
+        
+        // 3. Destroy GameObject
         this.destroy(); 
     }
 

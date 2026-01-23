@@ -1,8 +1,8 @@
+import { Config } from '../utils/Config.js';
 import { Player } from '../entities/Player.js';
 import { SecurityBot } from '../entities/SecurityBot.js';
 import { KeyItem } from '../entities/KeyItem.js';
 import { Door } from '../entities/Door.js';
-import { Computer } from '../entities/Computer.js'; // NEU IMPORTIERT
 import { Inventory } from '../systems/Inventory.js';
 import { DEPTH } from '../utils/Constants.js';
 
@@ -13,25 +13,21 @@ export class GameScene extends Phaser.Scene {
 
     create() {
         this.createMap();
-        this.createPlayer(); 
+        this.createPlayer(); // Inventar wird hier erstellt
         this.createEnemies();
         this.createInteractables(); 
         this.createCollisions();
         this.createCamera();
         
-        this.coordText = this.add.text(10, 10, '', { 
-            fontSize: '12px', fill: '#FFF', stroke: '#000', strokeThickness: 2 
-        }).setScrollFactor(0).setDepth(DEPTH.UI);
+        // UI Text oben links für Debugging
+        // Debug Mode entfernt auf User-Wunsch
     }
 
     update(time, delta) {
         if (this.player) {
             this.player.update();
-        }
-        
-        // NEU: Updates für alle Computer aufrufen (für das "E" Prompt)
-        if (this.computersGroup) {
-            this.computersGroup.getChildren().forEach(pc => pc.update());
+            // Zeigt Koordinaten an - extrem hilfreich um die Stelle in Tiled zu finden!
+            // if (this.coordText) { ... }
         }
     }
 
@@ -47,32 +43,58 @@ export class GameScene extends Phaser.Scene {
 
         this.physics.world.setBounds(0, 0, this.map.widthInPixels, this.map.heightInPixels);
 
+        // --- Layer Setup ---
+        
+        // 1. Boden (Keine Kollision)
         this.floorLayer = this.map.createLayer('Boden', allTilesets, 0, 0).setDepth(0);
         
+        // 2. Walls (BASIS DER WÄNDE - HIER MUSS DIE KOLLISION SEIN)
         this.wallsLayer = this.map.createLayer('Walls', allTilesets, 0, 0).setDepth(1);
-        this.wallsLayer.setCollisionBetween(1, 10000); 
+        // REVERT TO BLACKLIST (Temporary Fix):
+        // The user's map export does NOT yet contain the "collides" property on tiles.
+        // To ensure the game is playable NOW, we revert to excluding the known empty tiles (72, 75).
+        this.wallsLayer.setCollisionByExclusion([-1, 0, 72, 75]); 
+        // this.wallsLayer.setCollisionByProperty({ collides: true }); 
         
+        // 3. Decoration (Tische etc. - Auch Kollision)
         this.decoLayer = this.map.createLayer('Decoration', allTilesets, 0, 0).setDepth(5);
-        this.decoLayer.setCollisionBetween(1, 10000); 
+        // Also revert decoration to blacklist
+        this.decoLayer.setCollisionByExclusion([-1, 0, 72, 75]); 
+        // this.decoLayer.setCollisionByProperty({ collides: true }); 
 
+        // 4. Topwall (DACH DER WÄNDE - KEINE KOLLISION, ABER HOHE TIEFE)
+        // Dadurch kann der Spieler "hinter" der Wand laufen (Perspektive).
         if (this.map.getLayer('Topwall')) {
-            this.topWallLayer = this.map.createLayer('Topwall', allTilesets, 0, 0).setDepth(10); 
+            this.topWallLayer = this.map.createLayer('Topwall', allTilesets, 0, 0).setDepth(20); 
         }
 
         if (this.map.getLayer('Decoration High')) {
             this.decoHighLayer = this.map.createLayer('Decoration High', allTilesets, 0, 0).setDepth(100); 
         }
+
+        // --- DEBUG VISUALISIERUNG END ---
     }
 
     createPlayer() {
-        this.player = new Player(this, 800, 1400);
+        // Dynamic Spawn Point Logic
+        let spawnX = 800;
+        let spawnY = 1400;
+
+        const spawnPoint = this.map.findObject("Interactables", obj => obj.name === "SpawnPoint" || obj.name === "PlayerSpawn");
+        if (spawnPoint) {
+            spawnX = spawnPoint.x;
+            spawnY = spawnPoint.y;
+        } else {
+            console.warn("No 'SpawnPoint' found in 'Interactables' layer. Using default 800, 1400.");
+        }
+
+        this.player = new Player(this, spawnX, spawnY);
         this.player.inventory = new Inventory(this);
     }
 
     createInteractables() {
         this.keysGroup = this.add.group();
         this.doorsGroup = this.add.group();
-        this.computersGroup = this.add.group(); // NEUE GRUPPE
 
         const interactableLayer = this.map.getObjectLayer('Interactables');
         if (!interactableLayer) return;
@@ -83,10 +105,9 @@ export class GameScene extends Phaser.Scene {
 
             let x = obj.x;
             let y = obj.y;
-            // Type/Class aus Tiled lesen (toLowerCase für Sicherheit)
-            const objType = (obj.class || obj.type || "").toLowerCase();
+            const objType = obj.class || obj.type || "";
 
-            if (obj.gid) { // Grafik Objekte (Insert Tile)
+            if (obj.gid) { // Grafik Objekte
                 x += obj.width / 2;
                 y -= obj.height / 2;
 
@@ -95,13 +116,8 @@ export class GameScene extends Phaser.Scene {
                     const keyItem = new KeyItem(this, x, y, keyID);
                     this.keysGroup.add(keyItem);
                 }
-                // NEU: Auch Tile-Objekte können Computer sein
-                else if (objType === 'computer') {
-                    const pc = new Computer(this, x, y, props, obj.width, obj.height);
-                    this.computersGroup.add(pc);
-                }
             } 
-            else { // Shape Objekte (Rechtecke)
+            else { // Shape Objekte
                 x += obj.width / 2;
                 y += obj.height / 2;
 
@@ -109,18 +125,15 @@ export class GameScene extends Phaser.Scene {
                     const door = new Door(this, x, y, props, obj.width, obj.height);
                     this.doorsGroup.add(door);
                 }
-                // NEU: Shape-Objekte können Computer sein (Interaktions-Zonen)
-                else if (objType === 'computer') {
-                    const pc = new Computer(this, x, y, props, obj.width, obj.height);
-                    this.computersGroup.add(pc);
-                }
             }
         });
     }
 
     createEnemies() {
         this.bots = this.add.group();
+        // Bots blocken nur an echten Wänden (Walls/Deco), nicht am Dach (Topwall)
         const blockingLayers = [this.wallsLayer, this.decoLayer];
+        
         const waypointLayer = this.map.getObjectLayer('Waypoints');
         if (!waypointLayer) return;
         
@@ -141,7 +154,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     createCollisions() {
+        // Kollision nur mit Walls und Decoration
         const obstacles = [this.wallsLayer, this.decoLayer];
+        
         obstacles.forEach(layer => {
             this.physics.add.collider(this.player, layer);
             this.physics.add.collider(this.bots, layer);
@@ -150,15 +165,12 @@ export class GameScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.keysGroup, (player, keyItem) => keyItem.collect(player));
         this.physics.add.collider(this.player, this.doorsGroup, (player, door) => door.tryOpen(player));
         this.physics.add.collider(this.bots, this.doorsGroup);
-        
-        // Computer brauchen keine physische Kollision (wir machen das über Distanz im update),
-        // aber wenn du willst, dass man nicht durchlaufen kann, aktiviere dies:
-        // this.physics.add.collider(this.player, this.computersGroup);
     }
 
     createCamera() {
         this.cameras.main.setBounds(0, 0, this.physics.world.bounds.width, this.physics.world.bounds.height);
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
-        this.cameras.main.setZoom(2);
+        // Zoom increased even further to focus entirely on one room
+        this.cameras.main.setZoom(4.5);
     }
 }

@@ -11,20 +11,22 @@ import { SlidePuzzleScene } from './scenes/SlidePuzzleScene.js';
 import { SignalTuningScene } from './scenes/SignalTuningScene.js';
 
 
+import { Config } from './utils/Config.js';
+
 const config = {
     type: Phaser.AUTO,
     title: 'Technische Hochschule – Night Protocol',
     parent: 'game-container',
-    width: 800, 
-    height: 600,
+    width: Config.width, 
+    height: Config.height,
     backgroundColor: '#111', 
     render: { pixelArt: true },
     canvasContext: { willReadFrequently: true },
     physics: { 
         default: 'arcade', 
         arcade: { 
-            debug: false, 
-            gravity: { y: 0 }
+            debug: Config.physics.debug, 
+            gravity: { y: Config.physics.gravity }
         } 
     },
     // Array erweitert:

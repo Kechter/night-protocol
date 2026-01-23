@@ -12,6 +12,8 @@ export class UIScene extends Phaser.Scene {
         // Listener: Wenn GameScene sagt "Update Inventar", machen wir das
         const gameScene = this.scene.get('GameScene');
         gameScene.events.on('updateInventory', this.updateInventory, this);
+
+        this.createFullscreenButton();
     }
 
     createInventoryUI() {
@@ -56,5 +58,26 @@ export class UIScene extends Phaser.Scene {
                 this.uiGroup.add(icon);
             }
         }
+    }
+
+    createFullscreenButton() {
+        // Simple Text Button top-right
+        const btn = this.add.text(this.scale.width - 20, 20, '[ Fullscreen ]', { 
+            fontSize: '24px', 
+            fill: '#ffffff',
+            backgroundColor: '#000000'
+        })
+        .setOrigin(1, 0)
+        .setPadding(10)
+        .setInteractive({ useHandCursor: true })
+        .setScrollFactor(0); // Static UI
+
+        btn.on('pointerdown', () => {
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+            }
+        });
     }
 }
