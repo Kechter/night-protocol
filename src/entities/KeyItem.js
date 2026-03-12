@@ -28,6 +28,19 @@ export class KeyItem extends Phaser.Physics.Arcade.Sprite {
             repeat: -1
         });
 
+        // Hit-Text (Erklärung)
+        this.hintText = this.scene.add.text(this.x, this.y - 20, "[Klick] Aufheben", {
+            fontFamily: "monospace",
+            fontSize: "10px",
+            color: "#ffffff",
+            backgroundColor: "#000000",
+            padding: { x: 2, y: 2 }
+        }).setOrigin(0.5).setDepth(DEPTH.PROMPT);
+
+        this.on('destroy', () => {
+            if (this.hintText) this.hintText.destroy();
+        });
+
         // Clickable fallback (if spawned behind a wall)
         this.setInteractive({ useHandCursor: true });
         this.on('pointerdown', () => {

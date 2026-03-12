@@ -111,6 +111,26 @@ export class LockpickScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, 230, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      this.isComplete = true;
+      if (this.onResult) this.onResult(false);
+      this.scene.stop();
+      this.scene.resume("GameScene");
+    });
+    this.container.add(abortBtn);
+
     // Input Setup - Arrow keys + WASD
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A);

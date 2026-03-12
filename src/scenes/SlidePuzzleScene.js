@@ -77,6 +77,28 @@ export class SlidePuzzleScene extends Phaser.Scene {
       .setOrigin(1, 0.5);
     this.container.add(this.timerText);
 
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, 210, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      this.inputActive = false;
+      this.isComplete = true;
+      if (this.timerEvent) this.timerEvent.remove();
+      if (this.onResult) this.onResult(false);
+      this.scene.stop();
+      this.scene.resume("GameScene");
+    });
+    this.container.add(abortBtn);
+
     // Timer event
     this.timerEvent = this.time.addEvent({
       delay: 100,

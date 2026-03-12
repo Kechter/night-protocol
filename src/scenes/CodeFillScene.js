@@ -66,6 +66,27 @@ export class CodeFillScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.monitor.add(this.statusText);
 
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, content.y + content.height / 2 + 10, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      if (this.timerEvent) this.timerEvent.remove();
+      this.isComplete = true;
+      if (this.onResult) this.onResult(false);
+      this.scene.stop();
+      this.scene.resume("GameScene");
+    });
+    this.monitor.add(abortBtn);
+
     // Highlight erste Lücke
     this.highlightCurrentGap();
   }

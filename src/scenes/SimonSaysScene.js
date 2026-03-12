@@ -112,13 +112,31 @@ export class SimonSaysScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, 220, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      this.gameOver(false);
+    });
+    this.container.add(abortBtn);
+
     // Buttons erstellen
     this.buttons = [];
     this.colors.forEach((c) => {
       const btn = this.add
         .rectangle(c.x, c.y, 80, 80, c.hex)
         .setInteractive({ useHandCursor: true })
-        .setStrokeStyle(2, 0x000000); // Schwarzer Rand für Kontrast
+        .setStrokeStyle(3, 0xffffff, 0.2) // Schwacher weißer Rahmen
+        .setAlpha(0.3); // Inaktiv sehr dunkel
 
       btn.colorData = c;
 
@@ -174,13 +192,17 @@ export class SimonSaysScene extends Phaser.Scene {
   }
 
   flashButton(btn, callback) {
-    // Helle Farbe setzen (Weiß-Flash)
-    const originalColor = btn.fillColor;
-    btn.fillColor = 0xffffff;
-
-    this.time.delayedCall(200, () => {
-      btn.fillColor = originalColor; // Zurück zur Originalfarbe
-      if (callback) callback();
+    // Helle Farbe & volles Alpha setzen
+    this.tweens.add({
+      targets: btn,
+      alpha: 1,
+      scaleX: 1.1,
+      scaleY: 1.1,
+      duration: 150,
+      yoyo: true,
+      onComplete: () => {
+        if (callback) callback();
+      }
     });
   }
 

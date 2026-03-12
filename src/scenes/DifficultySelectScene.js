@@ -2,6 +2,7 @@ import {
   DIFFICULTY_SETTINGS,
   setDifficulty,
 } from "../utils/DifficultyConfig.js";
+import { Config } from "../utils/Config.js";
 
 /**
  * DifficultySelectScene
@@ -71,6 +72,9 @@ export class DifficultySelectScene extends Phaser.Scene {
         color: "#444444",
       })
       .setOrigin(0.5);
+
+    // Settings Panel (Bottom)
+    this.createSettingsPanel(W / 2, H - 100);
 
     // Preview panel (right side) — hidden until hover
     this.previewPanel = this.createPreviewPanel(W - 10, H / 2);
@@ -151,6 +155,78 @@ export class DifficultySelectScene extends Phaser.Scene {
     });
 
     this.cards.push(container);
+  }
+
+  createSettingsPanel(x, y) {
+    const container = this.add.container(x, y);
+
+    this.add
+      .text(0, -30, "-- GAME SETTINGS --", {
+        fontFamily: "monospace",
+        fontSize: "14px",
+        color: "#555555",
+      })
+      .setOrigin(0.5);
+
+    // Toggle 1: Admin Mode
+    const adminToggle = this.createToggle(
+      -120,
+      0,
+      "Admin Mode",
+      Config.adminMode,
+      (val) => {
+        Config.adminMode = val;
+      }
+    );
+    container.add(adminToggle);
+
+    // Toggle 2: Skip Minigames (Türen automatisch)
+    const skipToggle = this.createToggle(
+      120,
+      0,
+      "Skip Minigames",
+      Config.skipMinigames,
+      (val) => {
+        Config.skipMinigames = val;
+      }
+    );
+    container.add(skipToggle);
+
+    return container;
+  }
+
+  createToggle(x, y, labelText, initialValue, onChange) {
+    const container = this.add.container(x, y);
+    let isOn = initialValue;
+
+    const box = this.add.rectangle(-40, 0, 20, 20, isOn ? 0x00ff00 : 0x222222)
+      .setStrokeStyle(2, 0x555555)
+      .setInteractive({ useHandCursor: true });
+
+    const check = this.add.text(-40, 0, isOn ? "X" : "", {
+      fontFamily: "monospace",
+      fontSize: "16px",
+      color: "#000000",
+      fontStyle: "bold"
+    }).setOrigin(0.5);
+
+    const label = this.add.text(-20, 0, labelText, {
+      fontFamily: "monospace",
+      fontSize: "14px",
+      color: "#aaaaaa"
+    }).setOrigin(0, 0.5);
+
+    box.on("pointerover", () => box.setStrokeStyle(2, 0xffffff));
+    box.on("pointerout", () => box.setStrokeStyle(2, 0x555555));
+    box.on("pointerdown", () => {
+      isOn = !isOn;
+      box.setFillStyle(isOn ? 0x00ff00 : 0x222222);
+      check.setText(isOn ? "X" : "");
+      onChange(isOn);
+    });
+
+    container.add([box, check, label]);
+    return container;
   }
 
   createPreviewPanel(x, y) {

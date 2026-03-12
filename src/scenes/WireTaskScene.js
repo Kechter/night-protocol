@@ -62,6 +62,25 @@ export class WireTaskScene extends Phaser.Scene {
       .setOrigin(0.5);
     panel.add(title);
 
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, 175, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      if (this.onResult) this.onResult(false);
+      this.scene.stop();
+      this.scene.resume("GameScene");
+    });
+    panel.add(abortBtn);
+
     // Graphics Objekt für die Kabel
     this.lineGraphics = this.add.graphics();
     panel.add(this.lineGraphics);

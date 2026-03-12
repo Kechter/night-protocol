@@ -75,6 +75,25 @@ export class PatternUnlockScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, 220, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      if (this.onResult) this.onResult(false);
+      this.scene.stop();
+      this.scene.resume("GameScene");
+    });
+    this.container.add(abortBtn);
+
     // Grafik-Objekt für Linien
     this.graphics = this.add.graphics();
     this.container.add(this.graphics);

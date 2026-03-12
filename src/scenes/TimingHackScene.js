@@ -80,6 +80,26 @@ export class TimingHackScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, 135, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      this.isLocked = true;
+      if (this.onResult) this.onResult(false);
+      this.scene.stop();
+      this.scene.resume("GameScene");
+    });
+    this.container.add(abortBtn);
+
     // Lives display
     this.livesText = this.add
       .text(0, -95, this.getLivesString(), {
