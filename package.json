@@ -1,0 +1,20 @@
+{
+  "name": "night-protocol",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Night Protocol – TH Nürnberg Phaser Game",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:all": "vitest run && playwright test",
+    "serve": "npx http-server . -p 5500 -c-1 --cors"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.0",
+    "jsdom": "^25.0.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "@playwright/test": "^1.48.0",
+    "http-server": "^14.1.1"
+  }
+}

@@ -20,3 +20,6 @@ backup/
 node_modules/
 package-lock.json
 dist/
+
+# --- Test Output ---
+test-results/
