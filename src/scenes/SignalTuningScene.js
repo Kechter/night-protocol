@@ -83,7 +83,9 @@ export class SignalTuningScene extends Phaser.Scene {
 
     this.createControls();
 
-    this.progressBar = this.add.rectangle(0, 230, 0, 20, 0x00ff00);
+    this.progressBar = this.add
+      .rectangle(-200, 230, 0, 20, 0x00ff00)
+      .setOrigin(0, 0.5);
     this.progressBarBg = this.add
       .rectangle(0, 230, 400, 20)
       .setStrokeStyle(2, 0xffffff);
@@ -159,6 +161,9 @@ export class SignalTuningScene extends Phaser.Scene {
   }
 
   update(time, delta) {
+    // Schützt vor Fehlern, falls Phaser "update()" aufruft, bevor "create()" komplett fertig ist (z.B. Lade-Verzögerungen)
+    if (!this.matchText || !this.progressBar || !this.waveGraphics) return;
+
     // Stoppt Logik, wenn gewonnen
     if (this.isWon) return;
 
@@ -173,6 +178,7 @@ export class SignalTuningScene extends Phaser.Scene {
   }
 
   drawWaves(time) {
+    if (!this.waveGraphics) return;
     this.waveGraphics.clear();
     const width = 580;
     const left = -290;
@@ -210,7 +216,7 @@ export class SignalTuningScene extends Phaser.Scene {
       this.matchText.setText("LOCKING SIGNAL...");
       this.matchText.setColor("#00ff00");
     } else {
-      this.matchTime = Math.max(0, this.matchTime - delta * 2);
+      this.matchTime = Math.max(0, this.matchTime - delta * 0.5);
       this.matchText.setText("NO SIGNAL");
       this.matchText.setColor("#ff0000");
     }

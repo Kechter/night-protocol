@@ -18,6 +18,7 @@ export class GameScene extends Phaser.Scene {
   create() {
     // Reset game over state
     this.isGameOver = false;
+    this.gameOverGrace = 500; // 500ms grace period at start
 
     this.createMap();
     this.createPlayer(); // Inventar wird hier erstellt
@@ -34,6 +35,15 @@ export class GameScene extends Phaser.Scene {
     // Cleanup listener for scene shutdown/restart
     this.events.on("shutdown", this.shutdown, this);
     this.events.on("destroy", this.shutdown, this);
+
+    // Fix sticky controls: reset input state when scene resumes from minigame
+    this.events.on("resume", () => {
+      if (this.player && this.player.body) {
+        this.player.body.setVelocity(0, 0);
+      }
+      this.input.keyboard.resetKeys();
+      this.gameOverGrace = 500; // Grace period after minigame return
+    });
   }
 
   shutdown() {
@@ -46,8 +56,11 @@ export class GameScene extends Phaser.Scene {
   update(time, delta) {
     if (this.player) {
       this.player.update();
-      // Zeigt Koordinaten an - extrem hilfreich um die Stelle in Tiled zu finden!
-      // if (this.coordText) { ... }
+    }
+
+    // Tick down game-over grace period
+    if (this.gameOverGrace > 0) {
+      this.gameOverGrace -= delta;
     }
 
     if (this.lightingSystem) {
@@ -104,7 +117,8 @@ export class GameScene extends Phaser.Scene {
     ]);
     // this.wallsLayer.setCollisionByProperty({ collides: true });
 
-    // 3. Decoration (Tische etc. - Auch Kollision)
+    // 3. Decoration (Tische etc. - UNTER dem Spieler, Spieler läuft darüber)
+    //    Poster/Wanddeko die VOR dem Spieler sein sollen → "Decoration High" Layer in Tiled
     this.decoLayer = this.map
       .createLayer("Decoration", allTilesets, 0, 0)
       .setDepth(5);
@@ -114,7 +128,16 @@ export class GameScene extends Phaser.Scene {
     ]);
     // this.decoLayer.setCollisionByProperty({ collides: true });
 
-    // 4. Topwall (DACH DER WÄNDE - VOR DEM SPIELER, UNTER DUNKELHEIT)
+    // 4. WallDeco (Poster, Bilder auf Wänden - oberer Teil)
+    // Depth über Topwall (mapHeight + 1005), so dass sie auf dem Dach sichtbar sind.
+    // Der Spieler läuft hinter der Topwall und damit auch hinter diesem oberen Posterteil.
+    if (this.map.getLayer("WallDeco")) {
+      this.wallDecoLayer = this.map
+        .createLayer("WallDeco", allTilesets, 0, 0)
+        .setDepth(this.map.heightInPixels + 1005);
+    }
+
+    // 5. Topwall (DACH DER WÄNDE - VOR DEM SPIELER, UNTER DUNKELHEIT)
     // Depth = mapHeight + 1000 damit der Spieler (max depth ~mapHeight+10) dahinter erscheinen kann
     if (this.map.getLayer("Topwall")) {
       this.topWallLayer = this.map
@@ -122,6 +145,7 @@ export class GameScene extends Phaser.Scene {
         .setDepth(this.map.heightInPixels + 1000);
     }
 
+    // 6. Decoration High (immer VOR Spieler, z.B. Überhänge)
     if (this.map.getLayer("Decoration High")) {
       this.decoHighLayer = this.map
         .createLayer("Decoration High", allTilesets, 0, 0)
@@ -261,6 +285,18 @@ export class GameScene extends Phaser.Scene {
         spawnY = this.player.y + Phaser.Math.Between(-50, 50);
       }
 
+      // Prevent duplicate keys: check if this keyID already exists in world or inventory
+      let alreadyExists = false;
+      this.keysGroup.children.iterate((k) => {
+        if (k && k.keyID === keyID) alreadyExists = true;
+      });
+      if (this.player.inventory && this.player.inventory.hasKey(keyID))
+        alreadyExists = true;
+      if (alreadyExists) {
+        console.log(`Key ${keyID} already exists, skipping spawn.`);
+        return;
+      }
+
       const newKey = new KeyItem(this, spawnX, spawnY, keyID);
       this.keysGroup.add(newKey);
 
@@ -331,11 +367,15 @@ export class GameScene extends Phaser.Scene {
         .map((p) => ({ x: p.x, y: p.y }));
     };
 
-    // Bot 1: 1→2→3→4→5→1 (Kreis)
-    const path1 = getPath([1, 2, 3, 4, 5]);
+    // Bot 1: 1→2→3→4→5→4→3→2 (Ping-Pong)
+    const path1Forward = getPath([1, 2, 3, 4, 5]);
+    const path1Backward = [...path1Forward].reverse().slice(1, -1);
+    const path1 = [...path1Forward, ...path1Backward];
 
-    // Bot 2: 6→7→8→9→6 (Kreis)
-    const path2 = getPath([6, 7, 8, 9]);
+    // Bot 2: 6→7→8→9→8→7 (Ping-Pong)
+    const path2Forward = getPath([6, 7, 8, 9]);
+    const path2Backward = [...path2Forward].reverse().slice(1, -1);
+    const path2 = [...path2Forward, ...path2Backward];
 
     // Bot 3: 10→11→...→22 und zurück (Ping-Pong)
     const path3Forward = getPath([
@@ -396,7 +436,7 @@ export class GameScene extends Phaser.Scene {
 
     // NEU: Bot fängt Spieler -> Game Over (nur wenn nicht adminMode)
     this.physics.add.overlap(this.player, this.bots, (player, bot) => {
-      if (!Config.adminMode && !this.isGameOver) {
+      if (!Config.adminMode && !this.isGameOver && this.gameOverGrace <= 0) {
         this.gameOver();
       }
     });

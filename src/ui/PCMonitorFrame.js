@@ -5,14 +5,14 @@ import { DEPTH } from "../utils/Constants.js";
  * Erzeugt einen retro Hacker-Look mit Scanlines und Glow-Effekt
  */
 export class PCMonitorFrame {
-  constructor(scene, title = "SYSTEM ACCESS") {
+  constructor(scene, title = "SYSTEM ACCESS", options = {}) {
     this.scene = scene;
     this.title = title;
     this.container = null;
 
-    // Monitor Dimensionen
-    this.monitorWidth = 620;
-    this.monitorHeight = 480;
+    // Monitor Dimensionen (configurable per-scene)
+    this.monitorWidth = options.width || 620;
+    this.monitorHeight = options.height || 480;
     this.screenPadding = 20;
     this.bezelWidth = 15;
   }

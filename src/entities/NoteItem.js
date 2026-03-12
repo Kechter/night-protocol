@@ -30,7 +30,7 @@ export class NoteItem extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this, true);
 
-    this.setDepth(DEPTH.DECO);
+    this.setDepth(DEPTH.PROMPT);
     this.body.setCircle(8, 0, 2);
 
     // Glow / pulse animation

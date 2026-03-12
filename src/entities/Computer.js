@@ -44,7 +44,9 @@ export class Computer extends Phaser.GameObjects.Container {
     this.promptContainer.add([keyBg, keyText]);
     this.promptContainer.setDepth(DEPTH.PROMPT);
     this.promptContainer.setVisible(false);
-    this.add(this.promptContainer);
+    // ENTFERNT: this.add(this.promptContainer);
+    // Ein Container (Computer) überschreibt die Depth seiner Kinder. 
+    // Wenn das Prompt frei in der Scene leben soll, darf es nicht Kind des Computers sein.
 
     this.scene.add.existing(this);
 
@@ -99,8 +101,9 @@ export class Computer extends Phaser.GameObjects.Container {
 
     if (dist < activationRange) {
       this.promptContainer.setVisible(true);
-      this.promptContainer.y =
-        -this.height + Math.sin(this.scene.time.now / 150) * 2;
+      // Absolute Koordinaten setzen, da es jetzt kein Kind mehr ist
+      this.promptContainer.x = this.x;
+      this.promptContainer.y = this.y - this.height + Math.sin(this.scene.time.now / 150) * 2;
 
       if (Phaser.Input.Keyboard.JustDown(this.keyE)) {
         if (this.minigame) {
@@ -234,5 +237,13 @@ export class Computer extends Phaser.GameObjects.Container {
     }
     // Start cooldown based on difficulty
     this.hackCooldown = getDifficulty().hackCooldownMs;
+  }
+
+  destroy(fromScene) {
+    if (this.promptContainer) {
+      this.promptContainer.destroy();
+      this.promptContainer = null;
+    }
+    super.destroy(fromScene);
   }
 }

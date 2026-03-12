@@ -11,7 +11,7 @@ export class KeyItem extends Phaser.Physics.Arcade.Sprite {
         scene.add.existing(this);
         scene.physics.add.existing(this, true); 
 
-        this.setDepth(DEPTH.DECO); 
+        this.setDepth(DEPTH.PROMPT); 
         this.body.setCircle(6, 2, 2); 
 
         // --- FARBE ANWENDEN ---

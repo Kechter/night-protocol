@@ -23,7 +23,7 @@ export const DIFFICULTY_SETTINGS = {
     timingHackLives: 5,
     simonRounds: 3,
     lockpickTolerance: 25, // Grad (Sweet Spot Größe)
-    passwordAttempts: 12,
+    passwordAttempts: 14,
     signalTolerance: 1.0, // Frequenz-Toleranz (höher = leichter)
     signalAmpTolerance: 15,
     wireCount: 3, // Weniger Drähte
@@ -31,7 +31,7 @@ export const DIFFICULTY_SETTINGS = {
     // --- Security Bots ---
     botPatrolSpeed: 40,
     botChaseSpeed: 80,
-    visionRange: 120, // Kurze Sichtweite - sehr easy
+    visionRange: 80, // Kurze Sichtweite - sehr easy
     visionAngle: 60,
 
     // --- Gameplay ---
@@ -58,7 +58,7 @@ export const DIFFICULTY_SETTINGS = {
 
     botPatrolSpeed: 50,
     botChaseSpeed: 110,
-    visionRange: 160, // Normal-Sichtweite
+    visionRange: 110, // Normal-Sichtweite
     visionAngle: 75,
 
     hackCooldownMs: 5000,
@@ -84,7 +84,7 @@ export const DIFFICULTY_SETTINGS = {
 
     botPatrolSpeed: 65,
     botChaseSpeed: 145,
-    visionRange: 200, // Hard-Sichtweite
+    visionRange: 140, // Hard-Sichtweite
     visionAngle: 90,
 
     hackCooldownMs: 8000,
@@ -110,7 +110,7 @@ export const DIFFICULTY_SETTINGS = {
 
     botPatrolSpeed: 80,
     botChaseSpeed: 170,
-    visionRange: 240, // Hardcore-Sichtweite (aber nicht cross-map)
+    visionRange: 170, // Hardcore-Sichtweite (aber nicht cross-map)
     visionAngle: 100,
 
     hackCooldownMs: 15000,

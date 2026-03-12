@@ -28,6 +28,11 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
     this.blockingLayers = blockingLayers || [];
     this.lastKnownLocation = null;
     this._lastState = BOT_STATE.PATROL;
+    this.facingAngle = Math.PI / 2; // Default facing down
+
+    // Vision cone graphics - above darkness (mapHeight+10000) so always visible
+    this.visionCone = scene.add.graphics();
+    this.visionCone.setDepth(scene.map.heightInPixels + 10001);
 
     this.initAnimations();
   }
@@ -80,9 +85,16 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
   preUpdate(time, delta) {
     super.preUpdate(time, delta);
     if (!this.target) return;
+
+    // Track facing direction from movement
+    if (this.body.speed > 10) {
+      this.facingAngle = Math.atan2(this.body.velocity.y, this.body.velocity.x);
+    }
+
     this.checkVision();
     this.updateStateMachine(time, delta);
     this.updateAnimation();
+    this.drawVisionCone();
 
     // Show alert icon on state change
     if (this.state !== this._lastState) {
@@ -90,6 +102,129 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
       if (this.state === BOT_STATE.SEARCH) this.showAlert("?");
       this._lastState = this.state;
     }
+  }
+
+  drawVisionCone() {
+    this.visionCone.clear();
+    if (!this.active) return;
+
+    const diff = getDifficulty();
+    const range = diff.visionRange;
+    const halfAngle = Phaser.Math.DegToRad(diff.visionAngle / 2);
+
+    // Color based on state
+    let color = 0xffff00;
+    let alpha = 0.08;
+    if (this.state === BOT_STATE.CHASE) {
+      color = 0xff0000;
+      alpha = 0.15;
+    } else if (this.state === BOT_STATE.SEARCH) {
+      color = 0xff8800;
+      alpha = 0.12;
+    }
+
+    const startAngle = this.facingAngle - halfAngle;
+    const endAngle = this.facingAngle + halfAngle;
+    const steps = 24;
+
+    // OPTIMIERUNG: Aktive Türen einmal auslesen anstatt in jedem einzelnen Schritt des Strahls (das verursacht enormen Lag!)
+    const activeDoors = [];
+    if (this.scene.doorsGroup) {
+      this.scene.doorsGroup.children.iterate((door) => {
+        if (door && door.active !== false) {
+          activeDoors.push({
+            minX: door.x - door.width / 2,
+            minY: door.y - door.height / 2,
+            maxX: door.x + door.width / 2,
+            maxY: door.y + door.height / 2
+          });
+        }
+      });
+    }
+
+    const getCollisionDistance = (angle, maxDist) => {
+      const stepSize = 12; // Von 8 auf 12 erhöht bringt nochmal ~33% Performance
+      const maxSteps = Math.ceil(maxDist / stepSize);
+      const dx = Math.cos(angle) * stepSize;
+      const dy = Math.sin(angle) * stepSize;
+      
+      let currentX = this.x;
+      let currentY = this.y;
+      
+      for (let s = 1; s <= maxSteps; s++) {
+        currentX += dx;
+        currentY += dy;
+        
+        let hit = false;
+        // 1. Check tiled layers
+        for (let i = 0; i < this.blockingLayers.length; i++) {
+          const layer = this.blockingLayers[i];
+          if (!layer) continue;
+          const tile = layer.getTileAtWorldXY(currentX, currentY);
+          if (tile && tile.index > 0 && tile.collides) {
+            hit = true;
+            break;
+          }
+        }
+        
+        // 2. Check doors
+        if (!hit && activeDoors.length > 0) {
+          for (let i = 0; i < activeDoors.length; i++) {
+            const d = activeDoors[i];
+            if (currentX >= d.minX && currentX <= d.maxX &&
+                currentY >= d.minY && currentY <= d.maxY) {
+              hit = true;
+              break;
+            }
+          }
+        }
+        
+        if (hit) {
+          // Genaue Distanz zurückgeben
+          return Phaser.Math.Distance.Between(this.x, this.y, currentX, currentY);
+        }
+      }
+      return maxDist;
+    };
+
+    // Calculate all points first
+    const conePoints = [];
+    for (let i = 0; i <= steps; i++) {
+      const a = startAngle + (endAngle - startAngle) * (i / steps);
+      const dist = getCollisionDistance(a, range);
+      conePoints.push({
+        x: this.x + Math.cos(a) * dist,
+        y: this.y + Math.sin(a) * dist
+      });
+    }
+
+    // Filled shape
+    this.visionCone.fillStyle(color, alpha);
+    this.visionCone.beginPath();
+    this.visionCone.moveTo(this.x, this.y);
+    for (const pt of conePoints) {
+      this.visionCone.lineTo(pt.x, pt.y);
+    }
+    this.visionCone.closePath();
+    this.visionCone.fillPath();
+
+    // Subtle edge outline
+    this.visionCone.lineStyle(1, color, alpha * 2);
+    this.visionCone.beginPath();
+    this.visionCone.moveTo(this.x, this.y);
+    for (const pt of conePoints) {
+      this.visionCone.lineTo(pt.x, pt.y);
+    }
+    this.visionCone.closePath();
+    this.visionCone.strokePath();
+  }
+
+  destroy(fromScene) {
+    if (this.visionCone) {
+      this.visionCone.destroy();
+      this.visionCone = null;
+    }
+    super.destroy(fromScene);
   }
 
   moveAndCheckArrival(targetX, targetY, speed, radius, delta) {
@@ -288,11 +423,10 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
       this.target.x,
       this.target.y,
     );
-    let currentRotation = this.rotation;
-    if (this.body.speed > 10)
-      currentRotation = Math.atan2(this.body.velocity.y, this.body.velocity.x);
+    // Use tracked facing angle instead of raw rotation
+    const currentFacing = this.facingAngle;
     const angleDiff = Math.abs(
-      Phaser.Math.Angle.Wrap(angleToTarget - currentRotation),
+      Phaser.Math.Angle.Wrap(angleToTarget - currentFacing),
     );
 
     if (angleDiff >= Phaser.Math.DEG_TO_RAD * (diff.visionAngle / 2)) {
@@ -300,27 +434,34 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
       return;
     }
 
-    const line = new Phaser.Geom.Line(
-      this.x,
-      this.y,
-      this.target.x,
-      this.target.y,
-    );
+    // Stepped raycast: sample tiles every 16px along the line for reliable wall detection
     let isObstructed = false;
+    const steps = Math.ceil(dist / 16);
+    const dx = (this.target.x - this.x) / steps;
+    const dy = (this.target.y - this.y) / steps;
 
-    // 1. Check tile layers (walls)
-    for (let layer of this.blockingLayers) {
-      if (!layer) continue;
-      const tiles = layer.getTilesWithinShape(line);
-      if (tiles.some((tile) => tile.index > 0 && tile.collides)) {
-        isObstructed = true;
-        break;
+    for (let s = 1; s < steps && !isObstructed; s++) {
+      const sx = this.x + dx * s;
+      const sy = this.y + dy * s;
+      for (const layer of this.blockingLayers) {
+        if (!layer) continue;
+        const tile = layer.getTileAtWorldXY(sx, sy);
+        if (tile && tile.index > 0 && tile.collides) {
+          isObstructed = true;
+          break;
+        }
       }
     }
 
     // 2. Check closed doors – Door is a Rectangle with a static physics body.
     //    Open doors have already been destroyed (door.isOpen is set then destroy() called).
     if (!isObstructed && this.scene.doorsGroup) {
+      const line = new Phaser.Geom.Line(
+        this.x,
+        this.y,
+        this.target.x,
+        this.target.y,
+      );
       this.scene.doorsGroup.children.iterate((door) => {
         if (isObstructed || !door || door.active === false) return;
         const doorRect = new Phaser.Geom.Rectangle(

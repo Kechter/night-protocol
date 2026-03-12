@@ -245,14 +245,15 @@ export class LockpickScene extends Phaser.Scene {
   }
 
   generateNewTarget() {
-    // Zufälliger Winkel zwischen -150 und 150 Grad
-    this.targetAngle = Phaser.Math.Between(-150, 150);
+    // Zufälliger Winkel im vollen Kreis (0-360°)
+    this.targetAngle = Phaser.Math.Between(0, 359);
     this.drawSweetSpot();
   }
 
   isInSweetSpot() {
-    const diff = Math.abs(this.keyAngle - this.targetAngle);
-    return diff <= this.tolerance;
+    // Handle wrapping: shortest angular distance
+    let diff = ((((this.keyAngle - this.targetAngle) % 360) + 540) % 360) - 180;
+    return Math.abs(diff) <= this.tolerance;
   }
 
   update(time, delta) {
@@ -267,8 +268,8 @@ export class LockpickScene extends Phaser.Scene {
       this.keyAngle += 2;
     }
 
-    // Winkel begrenzen
-    this.keyAngle = Phaser.Math.Clamp(this.keyAngle, -180, 180);
+    // Winkel frei laufen lassen (volle 360° Drehung)
+    // Kein Clamp - Wrap-Around erlaubt
 
     // Schlüssel rotieren
     this.keyContainer.setRotation(Phaser.Math.DegToRad(this.keyAngle));

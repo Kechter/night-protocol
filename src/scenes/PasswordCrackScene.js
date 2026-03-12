@@ -25,6 +25,11 @@ export class PasswordCrackScene extends Phaser.Scene {
     this.maxAttempts = diff.passwordAttempts;
     this.codeLength = 4;
     this.isComplete = false;
+
+    // Easy-mode lock-in: tracks which positions are locked as correct
+    const diffKey = window.__NP_DIFFICULTY__ || "normal";
+    this.isEasyMode = diffKey === "easy";
+    this.lockedDigits = new Array(this.codeLength).fill(null);
   }
 
   create() {
@@ -38,32 +43,30 @@ export class PasswordCrackScene extends Phaser.Scene {
       return;
     }
 
-    // ── Monitor frame ─────────────────────────────────────────
-    this.monitor = new PCMonitorFrame(this, "PASSWORD CRACKER v3.0");
+    // ── Monitor frame (larger for better readability) ─────────
+    this.monitor = new PCMonitorFrame(this, "PASSWORD CRACKER v3.0", {
+      width: 740,
+      height: 560,
+    });
     this.monitor.create();
 
-    // ── Layout constants ──────────────────────────────────────
-    const CW = 565; // content width
-    const CH = 385; // content height
-    const CY = 10; // content center y
-    const TOP = CY - CH / 2 + 8; // ≈ -174
-    const BOT = CY + CH / 2 - 8; // ≈ +185
+    // ── Use actual content area from monitor ─────────────────
+    const content = this.monitor.getContentArea();
+    const TOP = content.y - content.height / 2;
+    const BOT = content.y + content.height / 2;
 
-    // Column split at x=40
-    const DIVX = 40;
-    const LOG_X = -CW / 2 + 110; // left column centre ≈ -172
-    const PAD_X = DIVX + (CW / 2 - DIVX) / 2; // right column centre ≈ +155
+    // Column split: left 45% = attempt log, right 55% = controls
+    const DIVX = -content.width / 2 + content.width * 0.45;
+    const LOG_X = (-content.width / 2 + DIVX) / 2;
+    const PAD_LEFT = DIVX + 12;
+    const PAD_RIGHT = content.width / 2 - 8;
+    const PAD_X = (PAD_LEFT + PAD_RIGHT) / 2;
 
     // Button metrics
-    const BTN = 34;
-    const GAP = 4;
-    const STEP = BTN + GAP; // 38
-
-    // Right column Y positions (left room for bigger label + status)
-    const LEGEND_Y = TOP + 8; // header legend
-    const STATUS_Y = TOP + 30; // "X VERSUCHE ÜBRIG"
-    const INPUT_Y = TOP + 72; // input box centre
-    const NP_TOP = INPUT_Y + 36; // numpad row-0 centre
+    const BTN = 38;
+    const BTN_GAP = 4;
+    const STEP = BTN + BTN_GAP;
+    const SECTION_GAP = 10;
 
     // ── LEFT column: "ATTEMPT LOG" header ────────────────────
     this.monitor.add(
@@ -76,16 +79,23 @@ export class PasswordCrackScene extends Phaser.Scene {
         .setOrigin(0.5, 0),
     );
 
-    // Column legend  ●green = richtig,  ●yellow = falsche Stelle
-    this.monitor.add(
-      this.add
-        .text(LOG_X, TOP + 32, "● richtig   ● falsche Stelle", {
-          fontFamily: "monospace",
-          fontSize: "12px",
-          color: "#336633",
-        })
-        .setOrigin(0.5, 0),
-    );
+    // Column legend - properly colored
+    const legendGreen = this.add
+      .text(LOG_X - 70, TOP + 32, "\u25cf richtig", {
+        fontFamily: "monospace",
+        fontSize: "12px",
+        color: "#00ff00",
+      })
+      .setOrigin(0, 0);
+    const legendYellow = this.add
+      .text(LOG_X + 10, TOP + 32, "\u25cf falsche Stelle", {
+        fontFamily: "monospace",
+        fontSize: "12px",
+        color: "#ffdd00",
+      })
+      .setOrigin(0, 0);
+    this.monitor.add(legendGreen);
+    this.monitor.add(legendYellow);
 
     // Vertical divider
     const dvg = this.add.graphics();
@@ -93,77 +103,99 @@ export class PasswordCrackScene extends Phaser.Scene {
     dvg.lineBetween(DIVX, TOP, DIVX, BOT);
     this.monitor.add(dvg);
 
-    // ── RIGHT column header ───────────────────────────────────
-    this.monitor.add(
-      this.add
-        .text(
-          PAD_X,
-          LEGEND_Y,
-          "Stelle \u25cf = richtig   Ziffer \u25cf = falsch",
-          {
-            fontFamily: "monospace",
-            fontSize: "13px",
-            color: "#666666",
-          },
-        )
-        .setOrigin(0.5, 0),
-    );
+    // ═══════════════════════════════════════════════════════════
+    // RIGHT column: cursor-based vertical stack layout
+    // Each element is placed at cursorY (top edge), then
+    // cursorY advances by the element's full height + gap.
+    // This makes overlap IMPOSSIBLE regardless of font size.
+    // ═══════════════════════════════════════════════════════════
+    let cursorY = TOP + 8;
 
-    // Attempt counter
-    this.statusText = this.add
-      .text(PAD_X, STATUS_Y, `${this.maxAttempts} VERSUCHE \u00dcBRIG`, {
+    // ─── 1. Rules block ──────────────────────────────────────
+    const rulesLines = [
+      "REGELN:",
+      "Jede Ziffer kommt nur 1x im Code vor.",
+      "",
+      "\u25a0 Gr\u00fcn  = richtige Stelle",
+      "\u25a0 Gelb  = falsche Stelle",
+      "\u25a0 Grau  = nicht im Code",
+    ];
+    if (this.isEasyMode) {
+      rulesLines.push("\u2605 Richtige werden fixiert!");
+    }
+    const rulesText = this.add
+      .text(PAD_X, cursorY, rulesLines.join("\n"), {
         fontFamily: "monospace",
-        fontSize: "18px",
+        fontSize: "11px",
+        color: "#668866",
+        lineSpacing: 2,
+      })
+      .setOrigin(0.5, 0);
+    this.monitor.add(rulesText);
+    cursorY += rulesText.height + SECTION_GAP;
+
+    // ─── 2. Separator line ───────────────────────────────────
+    const sepG = this.add.graphics();
+    sepG.lineStyle(1, 0x003300, 0.5);
+    sepG.lineBetween(PAD_LEFT, cursorY, PAD_RIGHT, cursorY);
+    this.monitor.add(sepG);
+    cursorY += SECTION_GAP;
+
+    // ─── 3. Status text ──────────────────────────────────────
+    this.statusText = this.add
+      .text(PAD_X, cursorY, `${this.maxAttempts} VERSUCHE \u00dcBRIG`, {
+        fontFamily: "monospace",
+        fontSize: "16px",
         color: "#ffff00",
       })
       .setOrigin(0.5, 0);
     this.monitor.add(this.statusText);
+    cursorY += this.statusText.height + SECTION_GAP;
 
-    // ── Input display ─────────────────────────────────────────
+    // ─── 4. Input display (4 digit slots) ────────────────────
+    const INPUT_H = BTN;
+    const INPUT_W = STEP * 4 - BTN_GAP;
+    const inputCenterY = cursorY + INPUT_H / 2;
     const inputBg = this.add
-      .rectangle(PAD_X, INPUT_Y, BTN * 4 + GAP * 3, BTN + 4, 0x002200)
+      .rectangle(PAD_X, inputCenterY, INPUT_W, INPUT_H, 0x002200)
       .setStrokeStyle(2, 0x00ff00);
     this.monitor.add(inputBg);
 
     this.inputTexts = [];
     for (let i = 0; i < this.codeLength; i++) {
-      const x = PAD_X - (BTN * 1.5 + GAP * 1.5) + i * STEP;
+      const x = PAD_X - (STEP * 1.5 - BTN_GAP / 2) + i * STEP;
       const t = this.add
-        .text(x, INPUT_Y, "_", {
+        .text(x, inputCenterY, "_", {
           fontFamily: "monospace",
-          fontSize: "22px",
+          fontSize: "20px",
           color: "#00ff00",
         })
         .setOrigin(0.5);
       this.inputTexts.push(t);
       this.monitor.add(t);
     }
+    cursorY += INPUT_H + SECTION_GAP;
 
-    // ── 3×3 Numpad ────────────────────────────────────────────
-    const NP_LEFT = PAD_X - STEP; // left column centre of 3-wide grid
+    // ─── 5. Numpad (3×3 + bottom row) ────────────────────────
+    const NP_LEFT = PAD_X - STEP;
 
-    // Digits 1–9
     for (let i = 1; i <= 9; i++) {
       const col = (i - 1) % 3;
       const row = Math.floor((i - 1) / 3);
-      this.makeBtn(
-        NP_LEFT + col * STEP,
-        NP_TOP + row * STEP,
-        BTN,
-        i.toString(),
-        () => this.addDigit(i),
-      );
+      const bx = NP_LEFT + col * STEP;
+      const by = cursorY + BTN / 2 + row * STEP;
+      this.makeBtn(bx, by, BTN, i.toString(), () => this.addDigit(i));
     }
 
     // 0 centred below 8
-    this.makeBtn(NP_LEFT + STEP, NP_TOP + 3 * STEP, BTN, "0", () =>
+    this.makeBtn(NP_LEFT + STEP, cursorY + BTN / 2 + 3 * STEP, BTN, "0", () =>
       this.addDigit(0),
     );
 
     // CLR below 9
     this.makeColorBtn(
       NP_LEFT + 2 * STEP,
-      NP_TOP + 3 * STEP,
+      cursorY + BTN / 2 + 3 * STEP,
       BTN,
       BTN,
       "CLR",
@@ -176,9 +208,9 @@ export class PasswordCrackScene extends Phaser.Scene {
     // OK — tall button to the right of the 3×3 grid
     this.makeColorBtn(
       NP_LEFT + 3 * STEP + 4,
-      NP_TOP + STEP,
+      cursorY + BTN / 2 + STEP,
       BTN - 4,
-      BTN * 2 + GAP,
+      BTN * 2 + BTN_GAP,
       "OK",
       0x003300,
       0x008800,
@@ -274,50 +306,51 @@ export class PasswordCrackScene extends Phaser.Scene {
           .setOrigin(0, 0.5),
       );
 
-      // Code digits  (plain numbers, evenly spaced)
+      // Wordle-style per-position feedback: colored backgrounds behind digits
       attempt.code.forEach((digit, di) => {
+        const posX = -70 + di * 30;
+        const hint = attempt.positionHints[di];
+
+        // Background color per hint
+        let bgColor;
+        if (hint === "green") {
+          bgColor = 0x006600;
+        } else if (hint === "yellow") {
+          bgColor = 0x665500;
+        } else {
+          bgColor = 0x1a1a1a;
+        }
+
+        const bg = this.add
+          .rectangle(posX, y, 26, 26, bgColor)
+          .setStrokeStyle(
+            1,
+            hint === "green"
+              ? 0x00ff00
+              : hint === "yellow"
+                ? 0xffdd00
+                : 0x333333,
+          );
+        this.attemptsContainer.add(bg);
+
+        // Digit text
+        const textColor =
+          hint === "green"
+            ? "#00ff00"
+            : hint === "yellow"
+              ? "#ffdd00"
+              : "#666666";
         this.attemptsContainer.add(
           this.add
-            .text(-70 + di * 28, y, digit.toString(), {
+            .text(posX, y, digit.toString(), {
               fontFamily: "monospace",
               fontSize: "18px",
-              color: "#00ff00",
+              color: textColor,
+              fontStyle: hint === "green" ? "bold" : "normal",
             })
             .setOrigin(0.5, 0.5),
         );
       });
-
-      // Vertical separator
-      this.attemptsContainer.add(
-        this.add
-          .text(58, y, "|", {
-            fontFamily: "monospace",
-            fontSize: "15px",
-            color: "#1a4d1a",
-          })
-          .setOrigin(0.5, 0.5),
-      );
-
-      // 4 pip dots
-      for (let pip = 0; pip < this.codeLength; pip++) {
-        let color;
-        if (pip < attempt.correctPosition) {
-          color = "#00ff00";
-        } else if (pip < attempt.correctPosition + attempt.correctDigit) {
-          color = "#ffdd00";
-        } else {
-          color = "#1c3d1c";
-        }
-        this.attemptsContainer.add(
-          this.add
-            .text(72 + pip * 20, y, "\u25cf", {
-              fontFamily: "monospace",
-              fontSize: "18px",
-              color,
-            })
-            .setOrigin(0.5, 0.5),
-        );
-      }
     });
   }
 
@@ -326,34 +359,80 @@ export class PasswordCrackScene extends Phaser.Scene {
   // ──────────────────────────────────────────────────────────────
 
   updateInputDisplay() {
-    this.inputTexts.forEach((t, i) =>
-      t.setText(
-        i < this.currentInput.length ? this.currentInput[i].toString() : "_",
-      ),
-    );
+    this.inputTexts.forEach((t, i) => {
+      if (this.lockedDigits[i] !== null) {
+        // Locked digit: show in green bold
+        t.setText(this.lockedDigits[i].toString());
+        t.setColor("#00ff00");
+        t.setFontStyle("bold");
+      } else if (
+        this.currentInput[i] !== null &&
+        this.currentInput[i] !== undefined
+      ) {
+        t.setText(this.currentInput[i].toString());
+        t.setColor("#00ff00");
+        t.setFontStyle("normal");
+      } else {
+        t.setText("_");
+        t.setColor("#00ff00");
+        t.setFontStyle("normal");
+      }
+    });
   }
 
   addDigit(digit) {
-    if (this.isComplete || this.currentInput.length >= this.codeLength) return;
-    this.currentInput.push(digit);
+    if (this.isComplete) return;
+    // Find first unlocked empty slot
+    let slot = -1;
+    for (let i = 0; i < this.codeLength; i++) {
+      if (
+        this.lockedDigits[i] === null &&
+        (this.currentInput[i] === null || this.currentInput[i] === undefined)
+      ) {
+        slot = i;
+        break;
+      }
+    }
+    if (slot === -1) return; // All slots filled
+    this.currentInput[slot] = digit;
     this.updateInputDisplay();
   }
 
   clearInput() {
     if (this.isComplete) return;
+    // Only clear unlocked positions
     this.currentInput = [];
+    for (let i = 0; i < this.codeLength; i++) {
+      this.currentInput.push(this.lockedDigits[i]);
+    }
     this.updateInputDisplay();
   }
 
   submitAttempt() {
-    if (this.isComplete || this.currentInput.length !== this.codeLength) return;
+    if (this.isComplete) return;
+    // Check all slots are filled (not null/undefined)
+    const allFilled =
+      this.currentInput.length === this.codeLength &&
+      this.currentInput.every((d) => d !== null && d !== undefined);
+    if (!allFilled) return;
 
     const result = this.calculateHints(this.currentInput);
+    const posHints = this.calculateHintsPerPosition(this.currentInput);
     this.attempts.push({
       code: [...this.currentInput],
       correctPosition: result.correctPosition,
       correctDigit: result.correctDigit,
+      positionHints: posHints,
     });
+
+    // Easy-mode: lock in correct-position digits
+    if (this.isEasyMode) {
+      for (let i = 0; i < this.codeLength; i++) {
+        if (posHints[i] === "green" && this.lockedDigits[i] === null) {
+          this.lockedDigits[i] = this.currentInput[i];
+        }
+      }
+    }
 
     this.updateAttemptsDisplay();
 
@@ -369,7 +448,11 @@ export class PasswordCrackScene extends Phaser.Scene {
       return;
     }
 
+    // Pre-fill locked digits for next attempt
     this.currentInput = [];
+    for (let i = 0; i < this.codeLength; i++) {
+      this.currentInput.push(this.lockedDigits[i]);
+    }
     this.updateInputDisplay();
   }
 
@@ -397,6 +480,34 @@ export class PasswordCrackScene extends Phaser.Scene {
       }
     }
     return { correctPosition, correctDigit };
+  }
+
+  /**
+   * Per-position hints: returns array of 'green'|'yellow'|'none' for each digit.
+   */
+  calculateHintsPerPosition(input) {
+    const hints = new Array(this.codeLength).fill("none");
+    const sc = [...this.secretCode];
+    const ic = [...input];
+
+    // Pass 1: exact matches → green
+    for (let i = 0; i < this.codeLength; i++) {
+      if (ic[i] === sc[i]) {
+        hints[i] = "green";
+        sc[i] = -1;
+        ic[i] = -2;
+      }
+    }
+    // Pass 2: right digit, wrong position → yellow
+    for (let i = 0; i < this.codeLength; i++) {
+      if (ic[i] === -2) continue;
+      const fi = sc.indexOf(ic[i]);
+      if (fi !== -1) {
+        hints[i] = "yellow";
+        sc[fi] = -1;
+      }
+    }
+    return hints;
   }
 
   endGame(success) {

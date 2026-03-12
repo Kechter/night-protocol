@@ -4,7 +4,7 @@ export class LightingSystem {
     this.player = player;
     this.isLightOn = true;
 
-    this.lightRadius = 50;
+    this.lightRadius = 35;
 
     this.createLighting();
     this.setupControls();
