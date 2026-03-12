@@ -71,75 +71,128 @@ export class CodeFillScene extends Phaser.Scene {
   }
 
   generateChallenge() {
-    // Verschiedene Code-Challenges
-    const challenges = [
+    const diff = getDifficulty();
+    
+    // EASY: Keine Programmierkenntnisse nötig. Logisches Denken (Wörter einsetzen)
+    const easyChallenges = [
       {
         code: [
-          "function unlockDoor(code) {",
-          "    const secret = [GAP_0];",
-          "    if (code === secret) {",
+          "SECURITY PROTOCOL:",
+          "If Access Card == VALID then",
+          "    Set Door_Status = [GAP_0]",
+          "Else",
+          "    Trigger_Alarm = [GAP_1]",
+          "End If"
+        ],
+        gaps: [
+          { line: 2, options: ["OPEN", "CLOSE", "LOCK", "BURN"], correct: 0 },
+          { line: 4, options: ["ON", "OFF", "MAYBE", "WAIT"], correct: 0 },
+        ],
+      },
+      {
+        code: [
+          "ELEVATOR CONTROL:",
+          "Target_Floor = 3",
+          "Current_Floor = 1",
+          "While Current_Floor < Target_Floor:",
+          "    [GAP_0]",
+          "Play Sound: [GAP_1]"
+        ],
+        gaps: [
+          { line: 4, options: ["GO UP", "GO DOWN", "STOP", "CRASH"], correct: 0 },
+          { line: 5, options: ["DING", "BEEP", "BOOM", "SILENCE"], correct: 0 },
+        ],
+      },
+      {
+        code: [
+          "POWER ROUTING:",
+          "Battery_Level = LOW",
+          "If Battery_Level == LOW then",
+          "    System_Mode = [GAP_0]",
+          "    Lights = [GAP_1]",
+          "End If"
+        ],
+        gaps: [
+          { line: 3, options: ["SAVING", "MAX", "OVERLOAD", "PARTY"], correct: 0 },
+          { line: 4, options: ["DIM", "BRIGHT", "STROBE", "COLOR"], correct: 0 },
+        ],
+      }
+    ];
+
+    // NORMAL: Leichtes Pseudo-Code/Skript-Format (Erfordert minimales technisches Verständnis)
+    const normalChallenges = [
+      {
+        code: [
+          "function bypassLock( keyID ) {",
+          "    if ( keyID [GAP_0] 'master' ) {",
           "        return [GAP_1];",
           "    }",
           "    return false;",
-          "}",
+          "}"
         ],
         gaps: [
-          { line: 1, options: ['"OPEN"', '"CLOSE"', "42", "null"], correct: 0 },
-          { line: 3, options: ["true", "false", '"yes"', "0"], correct: 0 },
+          { line: 1, options: ["==", "!=", "+", "-"], correct: 0 },
+          { line: 2, options: ["true", "false", "0", "null"], correct: 0 },
         ],
       },
       {
         code: [
-          "const bypass = () => {",
-          "    let access = [GAP_0];",
-          "    for (let i = 0; i < 3; i++) {",
-          "        access [GAP_1] 1;",
-          "    }",
-          "    return access === 3;",
-          "};",
+          "let attempts = 3;",
+          "while (attempts > 0) {",
+          "    if ( login() ) break;",
+          "    attempts [GAP_0];",
+          "}",
+          "if (attempts === [GAP_1]) lockSystem();"
         ],
         gaps: [
-          { line: 1, options: ["0", "1", "3", "null"], correct: 0 },
-          { line: 3, options: ["+=", "-=", "*=", "/="], correct: 0 },
+          { line: 3, options: ["--", "++", "**", "//"], correct: 0 },
+          { line: 5, options: ["0", "3", "-1", "4"], correct: 0 },
         ],
-      },
+      }
+    ];
+
+    // HARD / HARDCORE: Echtes Coding-Wissen erforderlich
+    const hardChallenges = [
       {
         code: [
           "async function hack(target) {",
-          "    const result = [GAP_0] fetch(target);",
-          "    if (result.status [GAP_1] 200) {",
-          '        console.log("SUCCESS");',
+          "    const res = [GAP_0] fetch(target);",
+          "    if (res.status [GAP_1] 200) {",
+          '        return res.json();',
           "    }",
-          "}",
+          "}"
         ],
         gaps: [
-          {
-            line: 1,
-            options: ["await", "return", "new", "delete"],
-            correct: 0,
-          },
-          { line: 2, options: ["===", "!==", ">", "<"], correct: 0 },
+          { line: 1, options: ["await", "yield", "new", "void"], correct: 0 },
+          { line: 2, options: ["===", "!==", "||", "&&"], correct: 0 },
         ],
       },
       {
         code: [
-          "class SecurityBypass {",
+          "class Exploit {",
           "    constructor() {",
-          "        this.level = [GAP_0];",
+          "        this.payload = [GAP_0];",
           "    }",
-          "    crack() {",
-          "        return this.level [GAP_1] 5;",
+          "    execute() {",
+          "        return this.payload [GAP_1] 1;",
           "    }",
-          "}",
+          "}"
         ],
         gaps: [
-          { line: 2, options: ["0", "null", '"max"', "[]"], correct: 0 },
-          { line: 5, options: [">=", "<=", "==", "!="], correct: 0 },
+          { line: 2, options: ["0", "null", "NaN", "[]"], correct: 0 },
+          { line: 5, options: ["<<", ">>", "===", "!=="], correct: 0 },
         ],
-      },
+      }
     ];
 
-    return Phaser.Math.RND.pick(challenges);
+    let pool = normalChallenges;
+    if (diff.label === "EASY") {
+       pool = easyChallenges;
+    } else if (diff.label === "HARD" || diff.label === "HARDCORE") {
+       pool = hardChallenges;
+    }
+
+    return Phaser.Math.RND.pick(pool);
   }
 
   createCodeDisplay(content) {
