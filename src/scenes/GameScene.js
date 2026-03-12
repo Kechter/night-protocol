@@ -344,6 +344,37 @@ export class GameScene extends Phaser.Scene {
       console.log("Alarm system disabled!");
     });
 
+    // Event: Alarm AUSLÖSEN (Laptop Lecture Falle)
+    this.events.on("triggerAlarm", () => {
+      // 1. Visueller Alarm (Blinken)
+      this.cameras.main.flash(500, 255, 0, 0); // Roter Flash
+      this.cameras.main.shake(300, 0.01);
+      
+      // Dauerhaftes rotes Pulsieren hinzufügen (optional)
+      const flashFx = this.cameras.main.postFX.addColorMatrix();
+      let flashActive = false;
+      this.time.addEvent({
+        delay: 800,
+        callback: () => {
+          flashActive = !flashActive;
+          if (flashActive) {
+             flashFx.contrast(1.5).sepia().hue(0);
+          } else {
+             flashFx.contrast(1).sepia(0).hue(0);
+          }
+        },
+        loop: true
+      });
+
+      // 2. Audio/UI Notification
+      const uiScene = this.scene.get("UIScene");
+      if (uiScene && uiScene.showNotification) {
+        uiScene.showNotification("WARNUNG: ALARM AUSGELÖST!", 0xff0000);
+      }
+
+      console.log("Lecture Alarm triggered! Waiting for Computer.js to send the hint note.");
+    });
+
     // Event: Win Condition
     this.events.on("winGame", () => {
       this.triggerWin();

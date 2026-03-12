@@ -29,7 +29,15 @@ export const KEY_CONFIG = {
   2: { color: 0x0000ff, name: "Blue Access" }, // Blau
   3: { color: 0x00ff00, name: "Green Access" }, // Grün
   4: { color: 0xffff00, name: "Yellow Access" }, // Gelb
-  default: { color: 0xffffff, name: "Master Key" },
+  
+  // Neue Text-basierte IDs (aus User Map):
+  "keycard_a": { color: 0xff0000, name: "Keycard A (Red)" },
+  "keycard_b": { color: 0x0055ff, name: "Keycard B (Blue)" },
+  "keycard_c": { color: 0x00ff00, name: "Keycard C (Green)" },
+  "keycard_d": { color: 0xffff00, name: "Keycard D (Yellow)" },
+  "master_key": { color: 0xffffff, name: "Master Key" },
+
+  default: { color: 0xffffff, name: "Generic Key" },
 };
 
 export const UI_CONFIG = {

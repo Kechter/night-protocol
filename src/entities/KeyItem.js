@@ -6,7 +6,7 @@ export class KeyItem extends Phaser.Physics.Arcade.Sprite {
         super(scene, x, y, 'item_key_gold'); 
         
         this.scene = scene;
-        this.keyID = String(keyID);
+        this.keyID = String(keyID).trim();
 
         scene.add.existing(this);
         scene.physics.add.existing(this, true); 
@@ -26,6 +26,23 @@ export class KeyItem extends Phaser.Physics.Arcade.Sprite {
             duration: 800,
             yoyo: true,
             repeat: -1
+        });
+
+        // Clickable fallback (if spawned behind a wall)
+        this.setInteractive({ useHandCursor: true });
+        this.on('pointerdown', () => {
+            if (this.scene.player) {
+                // Determine distance to make sure player is somewhat near
+                const dist = Phaser.Math.Distance.Between(this.x, this.y, this.scene.player.x, this.scene.player.y);
+                if (dist < 150) {
+                    this.collect(this.scene.player);
+                } else {
+                    const uiScene = this.scene.scene.get("UIScene");
+                    if (uiScene && uiScene.showNotification) {
+                        uiScene.showNotification("ZU WEIT WEG", 0xffaa00);
+                    }
+                }
+            }
         });
     }
 

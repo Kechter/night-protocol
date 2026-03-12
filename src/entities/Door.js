@@ -8,7 +8,7 @@ export class Door extends Phaser.GameObjects.Rectangle {
     this.scene = scene;
 
     const rawID = properties.reqKeyID || properties.keyID || properties.id;
-    this.reqKeyID = rawID ? String(rawID) : null;
+    this.reqKeyID = rawID ? String(rawID).trim() : null;
 
     // Custom Property aus Tiled: "minigame"
     // Werte: "simon", "wires", "timing", "pattern", "slide", "signal"

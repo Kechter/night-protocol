@@ -18,6 +18,7 @@ export class Computer extends Phaser.GameObjects.Container {
     this.hint = properties.hint || null;
     this.spawnsKey = properties.spawnsKey || null;
     this.disablesAlarm = properties.disablesAlarm || false;
+    this.triggersAlarm = properties.triggersAlarm || false; // NEU: Simon Says Falle
     this.disablesBots = properties.disablesBots || false;
     this.winGame = properties.winGame || false;
 
@@ -45,7 +46,7 @@ export class Computer extends Phaser.GameObjects.Container {
     this.promptContainer.setDepth(DEPTH.PROMPT);
     this.promptContainer.setVisible(false);
     // ENTFERNT: this.add(this.promptContainer);
-    // Ein Container (Computer) überschreibt die Depth seiner Kinder. 
+    // Ein Container (Computer) überschreibt die Depth seiner Kinder.
     // Wenn das Prompt frei in der Scene leben soll, darf es nicht Kind des Computers sein.
 
     this.scene.add.existing(this);
@@ -103,7 +104,8 @@ export class Computer extends Phaser.GameObjects.Container {
       this.promptContainer.setVisible(true);
       // Absolute Koordinaten setzen, da es jetzt kein Kind mehr ist
       this.promptContainer.x = this.x;
-      this.promptContainer.y = this.y - this.height + Math.sin(this.scene.time.now / 150) * 2;
+      this.promptContainer.y =
+        this.y - this.height + Math.sin(this.scene.time.now / 150) * 2;
 
       if (Phaser.Input.Keyboard.JustDown(this.keyE)) {
         if (this.minigame) {
@@ -217,6 +219,12 @@ export class Computer extends Phaser.GameObjects.Container {
     if (this.disablesAlarm) {
       this.scene.events.emit("disableAlarm");
       console.log("Alarm disabled!");
+    }
+
+    // Event: Alarm AUSLÖSEN (Falle)
+    if (this.triggersAlarm) {
+      this.scene.events.emit("triggerAlarm");
+      console.log("Alarm triggered!");
     }
 
     // Event: Security Bots deaktivieren
