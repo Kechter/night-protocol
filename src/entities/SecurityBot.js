@@ -98,8 +98,13 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
 
     // Show alert icon on state change
     if (this.state !== this._lastState) {
-      if (this.state === BOT_STATE.CHASE) this.showAlert("!");
-      if (this.state === BOT_STATE.SEARCH) this.showAlert("?");
+      // Das "!" erscheint jetzt schon beim STUNNED state (Entdeckung)
+      if (this.state === BOT_STATE.STUNNED || (this.state === BOT_STATE.CHASE && this._lastState !== BOT_STATE.STUNNED)) {
+        this.showAlert("!");
+      }
+      if (this.state === BOT_STATE.SEARCH) {
+        this.showAlert("?");
+      }
       this._lastState = this.state;
     }
   }
@@ -115,7 +120,7 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
     // Color based on state
     let color = 0xffff00;
     let alpha = 0.08;
-    if (this.state === BOT_STATE.CHASE) {
+    if (this.state === BOT_STATE.CHASE || this.state === BOT_STATE.STUNNED) {
       color = 0xff0000;
       alpha = 0.15;
     } else if (this.state === BOT_STATE.SEARCH) {
@@ -262,6 +267,9 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
       case BOT_STATE.PATROL:
         this.handlePatrol(delta);
         break;
+      case BOT_STATE.STUNNED:
+        this.handleStunned(delta);
+        break;
       case BOT_STATE.CHASE:
         this.handleChase();
         break;
@@ -271,6 +279,31 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
       case BOT_STATE.RETURN:
         this.handleReturn(time, delta);
         break;
+    }
+  }
+
+  handleStunned(delta) {
+    // Stehenbleiben
+    this.setVelocity(0, 0);
+    
+    // Timer runterzählen
+    if (this.stunTimer > 0) {
+      this.stunTimer -= delta;
+      
+      // Drehe den Bot aber trotzdem schon zur Position des Spielers, 
+      // damit es realistischer aussieht ("er guckt ihn an")
+      this.facingAngle = Phaser.Math.Angle.Between(
+        this.x,
+        this.y,
+        this.target.x,
+        this.target.y
+      );
+      
+      if (this.stunTimer <= 0) {
+        this.state = BOT_STATE.CHASE;
+      }
+    } else {
+      this.state = BOT_STATE.CHASE;
     }
   }
 
@@ -414,7 +447,9 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
       this.target.y,
     );
     if (dist > diff.visionRange) {
-      if (this.state === BOT_STATE.CHASE) this.state = BOT_STATE.SEARCH;
+      if (this.state === BOT_STATE.CHASE || this.state === BOT_STATE.STUNNED) {
+        this.state = BOT_STATE.SEARCH;
+      }
       return;
     }
     const angleToTarget = Phaser.Math.Angle.Between(
@@ -430,7 +465,9 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
     );
 
     if (angleDiff >= Phaser.Math.DEG_TO_RAD * (diff.visionAngle / 2)) {
-      if (this.state === BOT_STATE.CHASE) this.state = BOT_STATE.SEARCH;
+      if (this.state === BOT_STATE.CHASE || this.state === BOT_STATE.STUNNED) {
+        this.state = BOT_STATE.SEARCH;
+      }
       return;
     }
 
@@ -478,13 +515,32 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
 
     if (!isObstructed) {
       this.lastKnownLocation = { x: this.target.x, y: this.target.y };
-      // Fix: check old state BEFORE switching to CHASE
-      if (this.state === BOT_STATE.RETURN || this.state === BOT_STATE.PATROL) {
+      
+      // Fix: Wenn er davor Patrol oder Return war, haben wir ihn NEU entdeckt
+      if (this.state === BOT_STATE.RETURN || this.state === BOT_STATE.PATROL || this.state === BOT_STATE.IDLE) {
         this.breadcrumbs = [];
         this.lastBreadcrumbPos = { x: this.x, y: this.y };
+        
+        // Start Stun based on Difficulty
+        const dfLabel = diff.label || "NORMAL";
+        if (dfLabel === "EASY") {
+            this.stunTimer = 2000;
+            this.state = BOT_STATE.STUNNED;
+        } else if (dfLabel === "NORMAL") {
+            this.stunTimer = 1000;
+            this.state = BOT_STATE.STUNNED;
+        } else {
+            // HARD oder HARDCORE -> Instant Chase
+            this.state = BOT_STATE.CHASE;
+        }
+      } 
+      // Wenn er schon SEARCH war (aber noch nicht STUNNED) -> Direkt STUN oder CHASE
+      else if (this.state === BOT_STATE.SEARCH) {
+         this.state = BOT_STATE.CHASE; 
       }
-      this.state = BOT_STATE.CHASE;
-    } else if (this.state === BOT_STATE.CHASE) {
+      
+    } else if (this.state === BOT_STATE.CHASE || this.state === BOT_STATE.STUNNED) {
+      // Spieler ist wieder verdeckt
       this.state = BOT_STATE.SEARCH;
     }
   }

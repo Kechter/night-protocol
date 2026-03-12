@@ -4,6 +4,7 @@ export const BOT_STATE = {
   SEARCH: "search",
   RETURN: "return",
   IDLE: "idle",
+  STUNNED: "stunned",
 };
 
 export const PHYSICS_CONFIG = {

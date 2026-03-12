@@ -398,28 +398,31 @@ export class GameScene extends Phaser.Scene {
         .map((p) => ({ x: p.x, y: p.y }));
     };
 
-    // Bot 1: 1→2→3→4→5→4→3→2 (Ping-Pong)
+    // User Requested Patrol Rules:
+    // Bot 1: 1-5 <-> 5-1
     const path1Forward = getPath([1, 2, 3, 4, 5]);
     const path1Backward = [...path1Forward].reverse().slice(1, -1);
     const path1 = [...path1Forward, ...path1Backward];
 
-    // Bot 2: 6→7→8→9→8→7 (Ping-Pong)
+    // Bot 2: 6-9 <-> 9-6
     const path2Forward = getPath([6, 7, 8, 9]);
     const path2Backward = [...path2Forward].reverse().slice(1, -1);
     const path2 = [...path2Forward, ...path2Backward];
 
-    // Bot 3: 10→11→...→22 und zurück (Ping-Pong)
-    const path3Forward = getPath([
-      10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-    ]);
-    const path3Backward = [...path3Forward].reverse().slice(1, -1); // 21→20→...→11
+    // Bot 3: 10-22 <-> 22-10
+    const path3Forward = getPath([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]);
+    const path3Backward = [...path3Forward].reverse().slice(1, -1);
     const path3 = [...path3Forward, ...path3Backward];
 
-    // Bot 4: 23→24→23 (Ping-Pong)
-    const path4 = getPath([23, 24, 23]);
+    // Bot 4: 23-24 <-> 24-23
+    const path4Forward = getPath([23, 24]);
+    const path4Backward = [...path4Forward].reverse().slice(1, -1);
+    const path4 = [...path4Forward, ...path4Backward];
 
-    // Bot 5: 25→26→27→28→29→25 (Kreis)
-    const path5 = getPath([25, 26, 27, 28, 29]);
+    // Bot 5: 25-29 <-> 29-25
+    const path5Forward = getPath([25, 26, 27, 28, 29]);
+    const path5Backward = [...path5Forward].reverse().slice(1, -1);
+    const path5 = [...path5Forward, ...path5Backward];
 
     if (path1.length > 0)
       this.bots.add(

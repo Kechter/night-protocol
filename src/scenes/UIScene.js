@@ -24,13 +24,15 @@ export class UIScene extends Phaser.Scene {
     this.slotSize = 40;
     this.gap = 8;
 
-    // Positionierung (800x600 Screen)
-    const totalKeyWidth =
-      this.slotCount * this.slotSize + (this.slotCount - 1) * this.gap;
-    this.startX = (800 - totalKeyWidth) / 2;
-    this.startY = 540; // Unten Mitte
+    // Positionierung (Unten Links)
+    const paddingX = 20;
+    const paddingY = 60; // Abstand von unten
+
+    this.startX = paddingX;
+    this.startY = this.cameras.main.height - paddingY;
 
     // Note slots position (rechts neben den Key-Slots)
+    const totalKeyWidth = this.slotCount * this.slotSize + (this.slotCount - 1) * this.gap;
     this.noteStartX = this.startX + totalKeyWidth + this.gap * 3;
 
     this.drawSlots([], []);
