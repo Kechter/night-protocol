@@ -163,7 +163,6 @@ export class SignalTuningScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
 
-    btn.on("pointerdown", callback);
     btn.on("pointerdown", () => {
       btn.isDown = true;
     });
