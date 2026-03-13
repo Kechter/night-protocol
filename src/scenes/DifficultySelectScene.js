@@ -77,8 +77,8 @@ export class DifficultySelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Settings Panel (Bottom)
-    this.settingsContainer = this.createSettingsPanel(W / 2, H - 100);
+    // Settings Panel (Higher to avoid footer overlap)
+    this.settingsContainer = this.createSettingsPanel(W / 2, H - 180);
 
     // Preview panel (right side) — hidden until hover
     this.previewPanel = this.createPreviewPanel(W - 10, H / 2);
@@ -199,11 +199,11 @@ export class DifficultySelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Toggle 1: Admin Mode
+    // Toggle 1: Admin Mode (Invincibility)
     const adminToggle = this.createToggle(
-      -260,
-      0,
-      "Admin Mode",
+      -220,
+      -20,
+      "Gott-Modus (Unsterblich)",
       Config.adminMode,
       (val) => {
         Config.adminMode = val;
@@ -211,11 +211,23 @@ export class DifficultySelectScene extends Phaser.Scene {
     );
     container.add(adminToggle);
 
-    // Toggle 2: Skip Minigames
+    // Toggle 2: Auto-Open Doors
+    const doorToggle = this.createToggle(
+      40,
+      -20,
+      "Türen-Knacker",
+      Config.autoOpenDoors,
+      (val) => {
+        Config.autoOpenDoors = val;
+      },
+    );
+    container.add(doorToggle);
+
+    // Toggle 3: Skip Minigames
     const skipToggle = this.createToggle(
-      -80,
-      0,
-      "Skip Minigames",
+      -220,
+      20,
+      "Minigames überspringen",
       Config.skipMinigames,
       (val) => {
         Config.skipMinigames = val;
@@ -223,16 +235,17 @@ export class DifficultySelectScene extends Phaser.Scene {
     );
     container.add(skipToggle);
 
-    // Toggle 3: Speedrun Mode
+    // Toggle 4: Speedrun Mode
     this.speedrunToggle = this.createToggle(
-      120,
-      0,
-      "Speedrun Mode (Locks Cheats)",
+      40,
+      20,
+      "Speedrun Mode (Locks)",
       Config.speedrunMode,
       (val) => {
         Config.speedrunMode = val;
         if (val) {
           Config.adminMode = false;
+          Config.autoOpenDoors = false;
           Config.skipMinigames = false;
           this.refreshToggles();
         }
@@ -240,9 +253,9 @@ export class DifficultySelectScene extends Phaser.Scene {
     );
     container.add(this.speedrunToggle);
 
-    // Fullscreen Hint - NOW ADDED TO CONTAINER
+    // Fullscreen Hint
     const hint = this.add
-      .text(0, 45, "[F11] Vollbild empfohlen für das beste Erlebnis", {
+      .text(0, 70, "[F11] Vollbild empfohlen für das beste Erlebnis", {
         fontFamily: "monospace",
         fontSize: "14px",
         color: "#555555",
@@ -281,8 +294,9 @@ export class DifficultySelectScene extends Phaser.Scene {
     }).setOrigin(0, 0.5);
 
     container.updateState = () => {
-      if (labelText.includes("Admin")) isOn = Config.adminMode;
-      if (labelText.includes("Skip")) isOn = Config.skipMinigames;
+      if (labelText.includes("Gott")) isOn = Config.adminMode;
+      if (labelText.includes("Knacker")) isOn = Config.autoOpenDoors;
+      if (labelText.includes("Minigame")) isOn = Config.skipMinigames;
       if (labelText.includes("Speedrun")) isOn = Config.speedrunMode;
       
       box.setFillStyle(isOn ? 0x00ff00 : 0x222222);
@@ -291,12 +305,12 @@ export class DifficultySelectScene extends Phaser.Scene {
     };
 
     box.on("pointerover", () => {
-      const isLocked = (labelText.includes("Admin") || labelText.includes("Skip")) && Config.speedrunMode;
+      const isLocked = (labelText.includes("Gott") || labelText.includes("Knacker") || labelText.includes("Minigame")) && Config.speedrunMode;
       if (!isLocked) box.setStrokeStyle(2, 0xffffff);
     });
     box.on("pointerout", () => box.setStrokeStyle(2, 0x555555));
     box.on("pointerdown", () => {
-      const isLocked = (labelText.includes("Admin") || labelText.includes("Skip")) && Config.speedrunMode;
+      const isLocked = (labelText.includes("Gott") || labelText.includes("Knacker") || labelText.includes("Minigame")) && Config.speedrunMode;
       if (isLocked) {
         this.cameras.main.shake(100, 0.005);
         return;

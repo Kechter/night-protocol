@@ -3,8 +3,9 @@ export const Config = {
   height: 1080,
   zoomFactor: 2,
   debug: false,
-  adminMode: false, // true = alle Keys erhalten beim Start
-  skipMinigames: false, // true = Minigames auto-complete
+  adminMode: false, // Invincibility (Gott-Modus)
+  autoOpenDoors: false, // Türen öffnen ohne Interaktion
+  skipMinigames: false, // Minigames auto-complete
   speedrunMode: false,
   difficulty: "normal", // 'easy' | 'normal' | 'hard' | 'hardcore' (überschrieben von DifficultySelectScene)
   physics: {

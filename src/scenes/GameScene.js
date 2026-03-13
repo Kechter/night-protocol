@@ -169,6 +169,11 @@ export class GameScene extends Phaser.Scene {
       this.topWallLayer = this.map
         .createLayer("Topwall", allTilesets, 0, 0)
         .setDepth(this.map.heightInPixels + 1000);
+      
+      // Enable collision for vision occlusion (same tiles as normal walls)
+      this.topWallLayer.setCollisionByExclusion([
+        -1, 0, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80,
+      ]);
     }
 
     // 6. Decoration High (immer VOR Spieler, z.B. Überhänge)
@@ -414,8 +419,9 @@ export class GameScene extends Phaser.Scene {
 
   createEnemies() {
     this.bots = this.add.group();
-    // Bots blocken nur an echten Wänden (Walls/Deco), nicht am Dach (Topwall)
+    // Bots blocken nur an echten Wänden (Walls/Deco/Topwalls)
     const blockingLayers = [this.wallsLayer, this.decoLayer];
+    if (this.topWallLayer) blockingLayers.push(this.topWallLayer);
 
     const waypointLayer = this.map.getObjectLayer("Waypoints");
     if (!waypointLayer) return;

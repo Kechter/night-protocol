@@ -1,5 +1,6 @@
 import { BOT_STATE, PHYSICS_CONFIG, DEPTH } from "../utils/Constants.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
+import { Config } from "../utils/Config.js";
 
 export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
   constructor(scene, x, y, path, blockingLayers) {
@@ -148,7 +149,7 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
     }
 
     const getCollisionDistance = (angle, maxDist) => {
-      const stepSize = 12; // Von 8 auf 12 erhöht bringt nochmal ~33% Performance
+      const stepSize = 6; // Höhere Präzision gegen Durchschauen
       const maxSteps = Math.ceil(maxDist / stepSize);
       const dx = Math.cos(angle) * stepSize;
       const dy = Math.sin(angle) * stepSize;
@@ -439,6 +440,12 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
   }
 
   checkVision() {
+    if (Config.adminMode) {
+      if (this.state === BOT_STATE.CHASE || this.state === BOT_STATE.STUNNED) {
+        this.state = BOT_STATE.SEARCH;
+      }
+      return;
+    }
     const diff = getDifficulty();
     const dist = Phaser.Math.Distance.Between(
       this.x,
@@ -473,7 +480,8 @@ export class SecurityBot extends Phaser.Physics.Arcade.Sprite {
 
     // Stepped raycast: sample tiles every 16px along the line for reliable wall detection
     let isObstructed = false;
-    const steps = Math.ceil(dist / 16);
+    // Raycast precision: check every 4px instead of 16px to catch thin walls
+    const steps = Math.ceil(dist / 4);
     const dx = (this.target.x - this.x) / steps;
     const dy = (this.target.y - this.y) / steps;
 

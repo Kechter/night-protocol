@@ -19,10 +19,10 @@ export class TimingHackScene extends Phaser.Scene {
     this.barWidth = 400;
     this.barHeight = 40;
 
-    // Start-Konfiguration
-    this.cursorSpeed = 300;
+    // Start-Konfiguration aus DifficultyConfig
+    this.cursorSpeed = diff.timingHackSpeed || 300;
     this.cursorDir = 1;
-    this.targetWidth = 100;
+    this.targetWidth = diff.timingHackWidth || 100;
 
     this.isLocked = false;
   }

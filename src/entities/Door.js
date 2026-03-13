@@ -100,19 +100,21 @@ export class Door extends Phaser.GameObjects.Rectangle {
   tryOpen(player) {
     if (this.isOpen) return;
 
-    // Admin Mode: Skip key requirements, auto-open locked doors
-    if (Config.adminMode) {
-      if (this.requiredMinigame) {
-        this.startMinigame(player);
-        return;
-      }
+    // Cheat: Auto-Open Doors (Skip keys AND minigames)
+    if (Config.autoOpenDoors) {
       this.open();
       return;
     }
 
+    // Cheat: Skip Minigames separately
+    if (Config.skipMinigames && this.requiredMinigame) {
+        this.open();
+        return;
+    }
+
     if (this.isLocked) {
       if (!player.inventory || !player.inventory.hasKey(this.reqKeyID)) {
-        if (this.scene.soundManager) Object.values(this.scene.soundManager).length && this.scene.soundManager.playError();
+        if (this.scene.soundManager && this.scene.soundManager.playError) this.scene.soundManager.playError();
         this.shakeIcon();
         this.showLockedMessage("LOCKED");
         return;

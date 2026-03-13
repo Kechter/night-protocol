@@ -1,5 +1,6 @@
 import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
+import { getDifficulty } from "../utils/DifficultyConfig.js";
 
 export class PatternUnlockScene extends Phaser.Scene {
   constructor() {
@@ -8,19 +9,21 @@ export class PatternUnlockScene extends Phaser.Scene {
 
   init(data) {
     this.onResult = data.onResult;
+    this.diff = getDifficulty();
 
-    this.gridSize = 3;
+    this.gridSize = this.diff.patternGridSize || 3;
     this.dots = [];
-    this.targetPath = []; // IDs der Punkte in richtiger Reihenfolge
+    this.targetPath = []; 
     this.userPath = [];
 
     this.isInputMode = false;
     this.graphics = null;
 
-    // Layout
-    this.spacing = 80;
-    this.startX = -this.spacing;
-    this.startY = -this.spacing + 20;
+    // Responsive Layout based on gridSize
+    this.spacing = this.gridSize > 3 ? 60 : 80;
+    const totalW = (this.gridSize - 1) * this.spacing;
+    this.startX = -totalW / 2;
+    this.startY = -totalW / 2 + 20;
   }
 
   create() {
@@ -127,57 +130,78 @@ export class PatternUnlockScene extends Phaser.Scene {
     this.input.on("pointerup", () => this.stopDrawing());
 
     // Spiel starten: Erst Muster generieren, dann zeigen
-    this.generatePattern(5); // 5 Punkte lang
+    this.generatePattern(this.diff.patternLength || 5); 
     this.time.delayedCall(1000, () => this.showPattern());
   }
 
   generatePattern(length) {
-    // Simple Random Walk ohne doppelte Punkte
-    let current = Phaser.Math.Between(0, 8);
-    this.targetPath = [current];
+    // Current point as [col, row]
+    let col = Phaser.Math.Between(0, this.gridSize - 1);
+    let row = Phaser.Math.Between(0, this.gridSize - 1);
+    
+    let currentId = row * this.gridSize + col;
+    this.targetPath = [currentId];
 
     while (this.targetPath.length < length) {
-      // Nachbarn finden (Horizontal, Vertikal, Diagonal)
-      // Um es einfach zu halten: Einfach zufälligen NICHT benutzten Punkt wählen
-      // (Echte Pattern Locks erlauben nur Nachbarn, aber das ist komplexer zu coden)
-      let candidates = [0, 1, 2, 3, 4, 5, 6, 7, 8].filter(
-        (id) => !this.targetPath.includes(id),
-      );
+      // Possible neighbors (Horizontal, Vertikal, Diagonal)
+      let candidates = [];
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          if (dr === 0 && dc === 0) continue;
+          
+          let nr = row + dr;
+          let nc = col + dc;
+          
+          if (nr >= 0 && nr < this.gridSize && nc >= 0 && nc < this.gridSize) {
+            let id = nr * this.gridSize + nc;
+            if (!this.targetPath.includes(id)) {
+              candidates.push({ id, r: nr, c: nc });
+            }
+          }
+        }
+      }
 
       if (candidates.length === 0) break;
 
       let next = Phaser.Math.RND.pick(candidates);
-      this.targetPath.push(next);
+      this.targetPath.push(next.id);
+      row = next.r;
+      col = next.c;
     }
   }
 
   showPattern() {
     this.isInputMode = false;
-
-    // Visualisiere den Pfad
     this.graphics.clear();
-    this.graphics.lineStyle(4, 0x9b59b6, 1);
-    this.graphics.beginPath();
+    this.graphics.lineStyle(4, 0x9b59b6, 0.5);
 
-    const startDot = this.dots[this.targetPath[0]];
-    this.graphics.moveTo(startDot.x, startDot.y);
+    // Sequential Highlight
+    let delay = 0;
+    const sequenceDelay = this.targetPath.length > 8 ? 300 : 500;
+    this.targetPath.forEach((id, index) => {
+      this.time.delayedCall(delay, () => {
+        const d = this.dots[id];
+        
+        // Pulse dot
+        this.tweens.add({
+          targets: d,
+          scale: 1.8,
+          duration: 200,
+          yoyo: true,
+          ease: "Quad.easeOut"
+        });
 
-    this.targetPath.forEach((id) => {
-      const d = this.dots[id];
-      this.graphics.lineTo(d.x, d.y);
-      // Punkte aufleuchten lassen
-      this.tweens.add({
-        targets: d,
-        scale: 1.5,
-        duration: 200,
-        yoyo: true,
+        // Draw line from previous if exists
+        if (index > 0) {
+          const prev = this.dots[this.targetPath[index - 1]];
+          this.graphics.lineBetween(prev.x, prev.y, d.x, d.y);
+        }
       });
+      delay += sequenceDelay; 
     });
 
-    this.graphics.strokePath();
-
-    // Nach kurzer Zeit ausblenden und Input erlauben
-    this.time.delayedCall(2000, () => {
+    // After sequence finishes, allow input
+    this.time.delayedCall(delay + 500, () => {
       this.graphics.clear();
       this.statusText.setText("DRAW PATTERN");
       this.statusText.setColor("#ffff00");
@@ -196,10 +220,29 @@ export class PatternUnlockScene extends Phaser.Scene {
   handleDotHover(dot) {
     if (!this.isInputMode || !this.isDrawing) return;
 
-    // Punkt nur hinzufügen, wenn noch nicht im Pfad
     if (!this.userPath.includes(dot.id)) {
+      // SMART INCLUDE: Pass overlapping dots automatically
+      const lastId = this.userPath[this.userPath.length - 1];
+      const lastDot = this.dots[lastId];
+      
+      // If we move across a center dot (e.g. 0 to 2), include 1
+      this.checkIntermediateDots(lastDot, dot);
+
       this.userPath.push(dot.id);
       this.redrawUserPath();
+    }
+  }
+
+  checkIntermediateDots(from, to) {
+    // Check if there is a dot exactly between 'from' and 'to'
+    const midX = (from.gridX + to.gridX) / 2;
+    const midY = (from.gridY + to.gridY) / 2;
+
+    if (Number.isInteger(midX) && Number.isInteger(midY)) {
+      const midId = midY * this.gridSize + midX;
+      if (!this.userPath.includes(midId)) {
+        this.userPath.push(midId);
+      }
     }
   }
 

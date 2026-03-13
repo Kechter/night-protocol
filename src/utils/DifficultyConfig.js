@@ -27,6 +27,10 @@ export const DIFFICULTY_SETTINGS = {
     signalTolerance: 1.0, // Frequenz-Toleranz (höher = leichter)
     signalAmpTolerance: 15,
     wireCount: 3, // Weniger Drähte
+    patternGridSize: 3,
+    patternLength: 4,
+    timingHackSpeed: 250,
+    timingHackWidth: 120,
 
     // --- Security Bots ---
     botPatrolSpeed: 40,
@@ -55,6 +59,10 @@ export const DIFFICULTY_SETTINGS = {
     signalTolerance: 0.5,
     signalAmpTolerance: 5,
     wireCount: 4,
+    patternGridSize: 3,
+    patternLength: 5,
+    timingHackSpeed: 300,
+    timingHackWidth: 100,
 
     botPatrolSpeed: 50,
     botChaseSpeed: 110,
@@ -81,6 +89,10 @@ export const DIFFICULTY_SETTINGS = {
     signalTolerance: 0.3,
     signalAmpTolerance: 3,
     wireCount: 4,
+    patternGridSize: 4,
+    patternLength: 8,
+    timingHackSpeed: 400,
+    timingHackWidth: 70,
 
     botPatrolSpeed: 65,
     botChaseSpeed: 145,
@@ -103,10 +115,14 @@ export const DIFFICULTY_SETTINGS = {
     timingHackLives: 1,
     simonRounds: 8,
     lockpickTolerance: 6,
-    passwordAttempts: 7, // Minimum für garantierte Lösung (4-digit, 10 colors, Mastermind-Optimal)
+    patternLength: 12,
+    timingHackSpeed: 550,
+    timingHackWidth: 40,
+    passwordAttempts: 5, // Mathematisches Optimum für Hardcore
     signalTolerance: 0.2,
     signalAmpTolerance: 2,
     wireCount: 4,
+    patternGridSize: 5,
 
     botPatrolSpeed: 80,
     botChaseSpeed: 170,
