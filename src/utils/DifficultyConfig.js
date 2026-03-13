@@ -115,7 +115,7 @@ export const DIFFICULTY_SETTINGS = {
     timingHackLives: 1,
     simonRounds: 8,
     lockpickTolerance: 6,
-    patternLength: 12,
+    patternLength: 10,
     timingHackSpeed: 550,
     timingHackWidth: 40,
     passwordAttempts: 5, // Mathematisches Optimum für Hardcore
