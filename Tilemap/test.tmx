@@ -727,7 +727,7 @@
   <object id="100" type="computer" x="596" y="526.188" width="42" height="19.625">
    <properties>
     <property name="disableBots" value="true"/>
-    <property name="hint" value="Die Klausur ist im DataCenter ganz im Orden der Uni verschlossen"/>
+    <property name="hint" value="Die Klausur ist im DataCenter ganz im Norden der Uni verschlossen"/>
     <property name="id" value="laptop_lecture"/>
     <property name="minigame" value="simon"/>
    </properties>
