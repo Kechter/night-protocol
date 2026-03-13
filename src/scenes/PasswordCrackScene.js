@@ -2,6 +2,7 @@ import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
 import { PCMonitorFrame } from "../ui/PCMonitorFrame.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 /**
  * PasswordCrackScene – Mastermind-Style Passwort-Knacker
@@ -237,9 +238,13 @@ export class PasswordCrackScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      if (this.soundManager) this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      if (this.soundManager) this.soundManager.playClick();
       this.endGame(false);
     });
     this.monitor.add(abortBtn);
@@ -254,9 +259,15 @@ export class PasswordCrackScene extends Phaser.Scene {
       .rectangle(x, y, w, w, 0x004400)
       .setStrokeStyle(1, 0x00aa00)
       .setInteractive({ useHandCursor: true });
-    btn.on("pointerover", () => btn.setFillStyle(0x006600));
+    btn.on("pointerover", () => {
+      btn.setFillStyle(0x006600);
+      if (this.soundManager) this.soundManager.playHover();
+    });
     btn.on("pointerout", () => btn.setFillStyle(0x004400));
-    btn.on("pointerdown", cb);
+    btn.on("pointerdown", () => {
+      if (this.soundManager) this.soundManager.playClick();
+      cb();
+    });
     this.monitor.add(btn);
     this.monitor.add(
       this.add
@@ -275,9 +286,15 @@ export class PasswordCrackScene extends Phaser.Scene {
       .rectangle(x, y, w, h, fillNorm)
       .setStrokeStyle(1, fillHover)
       .setInteractive({ useHandCursor: true });
-    btn.on("pointerover", () => btn.setFillStyle(fillHover));
+    btn.on("pointerover", () => {
+      btn.setFillStyle(fillHover);
+      if (this.soundManager) this.soundManager.playHover();
+    });
     btn.on("pointerout", () => btn.setFillStyle(fillNorm));
-    btn.on("pointerdown", cb);
+    btn.on("pointerdown", () => {
+      if (this.soundManager) this.soundManager.playClick();
+      cb();
+    });
     this.monitor.add(btn);
     this.monitor.add(
       this.add

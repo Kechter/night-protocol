@@ -112,6 +112,7 @@ export class Door extends Phaser.GameObjects.Rectangle {
 
     if (this.isLocked) {
       if (!player.inventory || !player.inventory.hasKey(this.reqKeyID)) {
+        if (this.scene.soundManager) Object.values(this.scene.soundManager).length && this.scene.soundManager.playError();
         this.shakeIcon();
         this.showLockedMessage("LOCKED");
         return;
@@ -163,8 +164,10 @@ export class Door extends Phaser.GameObjects.Rectangle {
     this.scene.scene.launch(sceneKey, {
       onResult: (success) => {
         if (success) {
+          if (this.scene.soundManager) this.scene.soundManager.playSuccess();
           this.open();
         } else {
+          if (this.scene.soundManager) this.scene.soundManager.playError();
           this.showLockedMessage("FAIL");
           this.shakeIcon();
         }
@@ -187,6 +190,7 @@ export class Door extends Phaser.GameObjects.Rectangle {
   open() {
     this.isOpen = true;
     if (this.lockIcon) this.lockIcon.destroy();
+    if (this.scene.soundManager) this.scene.soundManager.playDoorOpen();
 
     // 1. Disable Physics Body immediately
     if (this.body) {

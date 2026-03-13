@@ -3,6 +3,7 @@ import {
   setDifficulty,
 } from "../utils/DifficultyConfig.js";
 import { Config } from "../utils/Config.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 /**
  * DifficultySelectScene
@@ -17,6 +18,8 @@ export class DifficultySelectScene extends Phaser.Scene {
   create() {
     const W = this.cameras.main.width;
     const H = this.cameras.main.height;
+
+    this.soundManager = getSoundManager(this);
 
     // Background
     this.add.rectangle(W / 2, H / 2, W, H, 0x000000);
@@ -139,6 +142,7 @@ export class DifficultySelectScene extends Phaser.Scene {
     container.add(hit);
 
     hit.on("pointerover", () => {
+      if (this.soundManager) this.soundManager.playHover();
       bg.setStrokeStyle(2, cfg.color, 1);
       bg.setFillStyle(0x0a0a0a);
       label.setColor("#ffffff");
@@ -151,6 +155,7 @@ export class DifficultySelectScene extends Phaser.Scene {
       stats.setColor("#444444");
     });
     hit.on("pointerdown", () => {
+      if (this.soundManager) this.soundManager.playClick();
       this.selectDifficulty(key, cfg);
     });
 

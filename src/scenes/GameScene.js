@@ -8,6 +8,7 @@ import { NoteItem } from "../entities/NoteItem.js";
 import { Computer } from "../entities/Computer.js";
 import { Inventory } from "../systems/Inventory.js";
 import { LightingSystem } from "../systems/LightingSystem.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 import { DEPTH } from "../utils/Constants.js";
 
 export class GameScene extends Phaser.Scene {
@@ -19,6 +20,9 @@ export class GameScene extends Phaser.Scene {
     // Reset game over state
     this.isGameOver = false;
     this.gameOverGrace = 500; // 500ms grace period at start
+
+    this.soundManager = getSoundManager(this);
+    this.soundManager.playBGM();
 
     this.createMap();
     this.createPlayer(); // Inventar wird hier erstellt

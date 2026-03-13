@@ -32,6 +32,14 @@ export class PreloadScene extends Phaser.Scene {
     });
 
     this.load.image("item_key_gold", "assets/item673.png");
+
+    // --- 3. SOUNDS ---
+    this.load.audio("bgm", "assets/sounds/bgm.wav");
+    this.load.audio("ui_hover", "assets/sounds/ui_hover.wav");
+    this.load.audio("ui_click", "assets/sounds/ui_click.wav");
+    this.load.audio("door", "assets/sounds/door.wav");
+    this.load.audio("success", "assets/sounds/success.wav");
+    this.load.audio("error", "assets/sounds/error.wav");
   }
 
   create() {
