@@ -5,6 +5,7 @@ export const Config = {
   debug: false,
   adminMode: false, // true = alle Keys erhalten beim Start
   skipMinigames: false, // true = Minigames auto-complete
+  speedrunMode: false,
   difficulty: "normal", // 'easy' | 'normal' | 'hard' | 'hardcore' (überschrieben von DifficultySelectScene)
   physics: {
     gravity: 0,

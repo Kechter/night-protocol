@@ -1,4 +1,5 @@
 import { getDifficulty } from "../utils/DifficultyConfig.js";
+import { lootLocker } from "../utils/LootLockerBackend.js";
 
 /**
  * WinScene - Wird aufgerufen wenn der Mainframe gehackt wurde.
@@ -44,6 +45,15 @@ export class WinScene extends Phaser.Scene {
       { text: "> Keine Spuren hinterlassen.", color: "#555555" },
       { text: "> Du verschwindest unbemerkt.", color: "#555555" },
     ];
+
+    if (this.stats.finalTime) {
+      lines.push({ text: "", color: "#ffffff" });
+      lines.push({ 
+        text: `> ABSCHLUSSZEIT: ${lootLocker.formatTime(this.stats.finalTime)}`, 
+        color: "#ffff00" 
+      });
+      lines.push({ text: "> NEUER HIGHSCORE!", color: "#00ffff" });
+    }
 
     const startY = 180;
     const lineH = 36;
@@ -99,6 +109,81 @@ export class WinScene extends Phaser.Scene {
       // ESC also restarts
       this.input.keyboard.once("keydown-ESC", () => btn.emit("pointerdown"));
       this.input.keyboard.once("keydown-ENTER", () => btn.emit("pointerdown"));
+    });
+
+    if (this.stats.finalTime) {
+      this.time.delayedCall(totalDelay - 400, () => {
+        this.createNameEntry(W / 2, H / 2 + 150);
+      });
+    }
+  }
+
+  createNameEntry(x, y) {
+    this.playerName = "HACKER";
+    
+    const label = this.add.text(x, y, "DEIN INITIALEN: ", {
+      fontFamily: "monospace",
+      fontSize: "20px",
+      color: "#888888"
+    }).setOrigin(1, 0.5);
+
+    const nameText = this.add.text(x + 10, y, this.playerName, {
+      fontFamily: "monospace",
+      fontSize: "30px",
+      color: "#00ff00",
+      backgroundColor: "#002200",
+      padding: { x: 10, y: 5 }
+    }).setOrigin(0, 0.5);
+
+    // Cursor effect
+    this.time.addEvent({
+      delay: 500,
+      callback: () => {
+        if (nameText.active) {
+            const current = nameText.text;
+            if (current.endsWith("_")) nameText.setText(current.slice(0, -1));
+            else nameText.setText(current + "_");
+        }
+      },
+      loop: true
+    });
+
+    const submitBtn = this.add.text(x + 300, y, "[ SUBMIT ]", {
+        fontFamily: "monospace",
+        fontSize: "22px",
+        color: "#00ffff",
+        backgroundColor: "#002222",
+        padding: { x: 15, y: 8 }
+    })
+    .setOrigin(0.5)
+    .setInteractive({ useHandCursor: true });
+
+    submitBtn.on("pointerdown", async () => {
+        const finalName = nameText.text.replace("_", "").trim() || "ANON";
+        submitBtn.setText("[ SAVING... ]").disableInteractive();
+        
+        // 1. Set Name
+        await lootLocker.setPlayerName(finalName);
+
+        // 2. Submit Score
+        // (Leaderboard IDs would be configured in reality)
+        const diff = getDifficulty().key;
+        await lootLocker.submitScore(diff, this.stats.finalTime);
+
+        submitBtn.setText("[ SAVED! ]").setColor("#00ff00");
+        this.time.delayedCall(1000, () => {
+            this.scene.start("LeaderboardScene");
+        });
+    });
+
+    // Keyboard Input for name
+    this.input.keyboard.on("keydown", (event) => {
+        if (event.keyCode === 8 && this.playerName.length > 0) {
+            this.playerName = this.playerName.slice(0, -1);
+        } else if (event.key.length === 1 && this.playerName.length < 12) {
+            this.playerName += event.key.toUpperCase();
+        }
+        nameText.setText(this.playerName);
     });
   }
 }

@@ -33,6 +33,13 @@ export class GameScene extends Phaser.Scene {
     this.createLighting(); // NEW: Atmospheric lighting
     this.setupEventListeners(); // NEW: Event System für PC-Hacks
 
+    // Speedrun Mode timing
+    if (Config.speedrunMode) {
+      this.startTime = 0;
+      this.timerStarted = false;
+      this.events.emit("updateTimer", 0);
+    }
+
     // UI Text oben links für Debugging
     // Debug Mode entfernt auf User-Wunsch
 
@@ -60,6 +67,21 @@ export class GameScene extends Phaser.Scene {
   update(time, delta) {
     if (this.player) {
       this.player.update();
+    }
+
+    // Speedrun Timer Update
+    if (Config.speedrunMode && !this.isGameOver) {
+      if (!this.timerStarted) {
+        // Start timer when player first moves or interacts
+        const move = this.player && (this.player.body.velocity.x !== 0 || this.player.body.velocity.y !== 0);
+        if (move) {
+          this.startTime = this.time.now;
+          this.timerStarted = true;
+        }
+      } else {
+        const elapsed = this.time.now - this.startTime;
+        this.events.emit("updateTimer", elapsed);
+      }
     }
 
     // Tick down game-over grace period
@@ -356,7 +378,7 @@ export class GameScene extends Phaser.Scene {
       // 1. Visueller Alarm (Blinken)
       this.cameras.main.flash(500, 255, 0, 0); // Roter Flash
       this.cameras.main.shake(300, 0.01);
-      
+
       // Dauerhaftes rotes Pulsieren hinzufügen (optional)
       const flashFx = this.cameras.main.postFX.addColorMatrix();
       let flashActive = false;
@@ -365,12 +387,12 @@ export class GameScene extends Phaser.Scene {
         callback: () => {
           flashActive = !flashActive;
           if (flashActive) {
-             flashFx.contrast(1.5).sepia().hue(0);
+            flashFx.contrast(1.5).sepia().hue(0);
           } else {
-             flashFx.contrast(1).sepia(0).hue(0);
+            flashFx.contrast(1).sepia(0).hue(0);
           }
         },
-        loop: true
+        loop: true,
       });
 
       // 2. Audio/UI Notification
@@ -379,7 +401,9 @@ export class GameScene extends Phaser.Scene {
         uiScene.showNotification("WARNUNG: ALARM AUSGELÖST!", 0xff0000);
       }
 
-      console.log("Lecture Alarm triggered! Waiting for Computer.js to send the hint note.");
+      console.log(
+        "Lecture Alarm triggered! Waiting for Computer.js to send the hint note.",
+      );
     });
 
     // Event: Win Condition
@@ -417,7 +441,9 @@ export class GameScene extends Phaser.Scene {
     const path2 = [...path2Forward, ...path2Backward];
 
     // Bot 3: 10-22 <-> 22-10
-    const path3Forward = getPath([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]);
+    const path3Forward = getPath([
+      10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+    ]);
     const path3Backward = [...path3Forward].reverse().slice(1, -1);
     const path3 = [...path3Forward, ...path3Backward];
 
@@ -513,9 +539,10 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(600, () => {
       this.cameras.main.fadeOut(600, 0, 0, 0);
       this.cameras.main.once("camerafadeoutcomplete", () => {
+        const finalTime = Config.speedrunMode ? (this.time.now - this.startTime) : null;
         this.scene.stop("UIScene");
         this.scene.stop("GameScene");
-        this.scene.start("WinScene");
+        this.scene.start("WinScene", { finalTime });
       });
     });
   }

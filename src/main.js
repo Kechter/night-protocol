@@ -7,6 +7,7 @@ import { ControlsScene } from "./scenes/ControlsScene.js";
 import { IntroScene } from "./scenes/IntroScene.js";
 import { WinScene } from "./scenes/WinScene.js";
 import { GameOverScene } from "./scenes/GameOverScene.js";
+import { LeaderboardScene } from "./scenes/LeaderboardScene.js";
 // Alte Minigames
 import { SimonSaysScene } from "./scenes/SimonSaysScene.js";
 import { WireTaskScene } from "./scenes/WireTaskScene.js";
@@ -56,6 +57,7 @@ const config = {
     UIScene,
     WinScene,
     GameOverScene,
+    LeaderboardScene,
     // Minigames
     SimonSaysScene,
     WireTaskScene,

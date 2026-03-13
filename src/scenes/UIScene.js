@@ -1,4 +1,6 @@
 import { KEY_CONFIG } from "../utils/Constants.js";
+import { Config } from "../utils/Config.js";
+import { lootLocker } from "../utils/LootLockerBackend.js";
 
 export class UIScene extends Phaser.Scene {
   constructor() {
@@ -15,6 +17,41 @@ export class UIScene extends Phaser.Scene {
     gameScene.events.on("updateInventory", this.updateInventory, this);
 
     this.createFullscreenButton();
+
+    if (Config.speedrunMode) {
+      this.createSpeedrunTimer();
+      gameScene.events.on("updateTimer", this.updateTimerUI, this);
+    }
+  }
+
+  createSpeedrunTimer() {
+    this.timerText = this.add
+      .text(this.cameras.main.width / 2, 40, "00:00.00", {
+        fontFamily: "monospace",
+        fontSize: "32px",
+        color: "#00ff00",
+        backgroundColor: "#001100",
+        padding: { x: 10, y: 5 },
+        stroke: "#004400",
+        strokeThickness: 2,
+      })
+      .setOrigin(0.5, 0)
+      .setAlpha(0.8);
+    
+    // Aesthetic glow
+    this.tweens.add({
+      targets: this.timerText,
+      alpha: 1,
+      duration: 1000,
+      yoyo: true,
+      loop: -1
+    });
+  }
+
+  updateTimerUI(ms) {
+    if (this.timerText) {
+      this.timerText.setText(lootLocker.formatTime(ms));
+    }
   }
 
   createInventoryUI() {
@@ -32,7 +69,8 @@ export class UIScene extends Phaser.Scene {
     this.startY = this.cameras.main.height - paddingY;
 
     // Note slots position (rechts neben den Key-Slots)
-    const totalKeyWidth = this.slotCount * this.slotSize + (this.slotCount - 1) * this.gap;
+    const totalKeyWidth =
+      this.slotCount * this.slotSize + (this.slotCount - 1) * this.gap;
     this.noteStartX = this.startX + totalKeyWidth + this.gap * 3;
 
     this.drawSlots([], []);

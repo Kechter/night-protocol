@@ -4,6 +4,7 @@ import {
 } from "../utils/DifficultyConfig.js";
 import { Config } from "../utils/Config.js";
 import { getSoundManager } from "../utils/SoundManager.js";
+import { lootLocker } from "../utils/LootLockerBackend.js";
 
 /**
  * DifficultySelectScene
@@ -77,11 +78,33 @@ export class DifficultySelectScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // Settings Panel (Bottom)
-    this.createSettingsPanel(W / 2, H - 100);
+    this.settingsContainer = this.createSettingsPanel(W / 2, H - 100);
 
     // Preview panel (right side) — hidden until hover
     this.previewPanel = this.createPreviewPanel(W - 10, H / 2);
     this.previewPanel.setVisible(false);
+
+    // Leaderboard Button
+    this.createLeaderboardButton(W - 150, H - 40);
+  }
+
+  createLeaderboardButton(x, y) {
+    const btn = this.add.text(x, y, "[ GLOBAL LEADERBOARD ]", {
+      fontFamily: "monospace",
+      fontSize: "18px",
+      color: "#00ffff",
+      backgroundColor: "#002222",
+      padding: { x: 15, y: 8 }
+    })
+    .setOrigin(0.5)
+    .setInteractive({ useHandCursor: true });
+
+    btn.on("pointerover", () => btn.setColor("#ffffff"));
+    btn.on("pointerout", () => btn.setColor("#00ffff"));
+    btn.on("pointerdown", () => {
+      if (this.soundManager) this.soundManager.playClick();
+      this.scene.start("LeaderboardScene");
+    });
   }
 
   createCard(x, y, key, cfg, index) {
@@ -105,7 +128,8 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Label
     const label = this.add
-      .text(-cardW / 2 + 24, -20, `[ ${cfg.label} ]`, { // Adjusted Y offset
+      .text(-cardW / 2 + 24, -20, `[ ${cfg.label} ]`, {
+        // Adjusted Y offset
         fontFamily: "monospace",
         fontSize: "26px",
         color: cfg.colorHex,
@@ -116,7 +140,8 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Subtitle
     const sub = this.add
-      .text(-cardW / 2 + 24, 10, cfg.subtitle, { // Adjusted Y offset
+      .text(-cardW / 2 + 24, 10, cfg.subtitle, {
+        // Adjusted Y offset
         fontFamily: "monospace",
         fontSize: "17px",
         color: "#888888",
@@ -127,7 +152,8 @@ export class DifficultySelectScene extends Phaser.Scene {
     // Stats preview (right side of card) - moved down and formatted
     const statsText = `Zeit: x${cfg.minigameTimeMultiplier.toFixed(1)} | Bots: ${cfg.botChaseSpeed}px/s | Sicht: ${cfg.visionRange}px`;
     const stats = this.add
-      .text(-cardW / 2 + 24, 34, statsText, { // Adjusted Y offset to fit inside new cardH
+      .text(-cardW / 2 + 24, 34, statsText, {
+        // Adjusted Y offset to fit inside new cardH
         fontFamily: "monospace",
         fontSize: "13px",
         color: "#555555",
@@ -175,38 +201,62 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Toggle 1: Admin Mode
     const adminToggle = this.createToggle(
-      -90,
+      -260,
       0,
       "Admin Mode",
       Config.adminMode,
       (val) => {
         Config.adminMode = val;
-      }
+      },
     );
     container.add(adminToggle);
 
-    // Toggle 2: Skip Minigames (Türen automatisch)
+    // Toggle 2: Skip Minigames
     const skipToggle = this.createToggle(
-      90,
+      -80,
       0,
       "Skip Minigames",
       Config.skipMinigames,
       (val) => {
         Config.skipMinigames = val;
-      }
+      },
     );
     container.add(skipToggle);
 
-    // Fullscreen Hint
-    this.add
-      .text(x, y + 40, "[F11] Vollbild empfohlen für das beste Erlebnis", {
+    // Toggle 3: Speedrun Mode
+    this.speedrunToggle = this.createToggle(
+      120,
+      0,
+      "Speedrun Mode (Locks Cheats)",
+      Config.speedrunMode,
+      (val) => {
+        Config.speedrunMode = val;
+        if (val) {
+          Config.adminMode = false;
+          Config.skipMinigames = false;
+          this.refreshToggles();
+        }
+      }
+    );
+    container.add(this.speedrunToggle);
+
+    // Fullscreen Hint - NOW ADDED TO CONTAINER
+    const hint = this.add
+      .text(0, 45, "[F11] Vollbild empfohlen für das beste Erlebnis", {
         fontFamily: "monospace",
         fontSize: "14px",
-        color: "#888888",
+        color: "#555555",
       })
       .setOrigin(0.5);
+    container.add(hint);
 
     return container;
+  }
+
+  refreshToggles() {
+    this.settingsContainer.list.forEach(item => {
+      if (item.updateState) item.updateState();
+    });
   }
 
   createToggle(x, y, labelText, initialValue, onChange) {
@@ -227,16 +277,35 @@ export class DifficultySelectScene extends Phaser.Scene {
     const label = this.add.text(-20, 0, labelText, {
       fontFamily: "monospace",
       fontSize: "14px",
-      color: "#aaaaaa"
+      color: isOn ? "#00ff00" : "#aaaaaa"
     }).setOrigin(0, 0.5);
 
-    box.on("pointerover", () => box.setStrokeStyle(2, 0xffffff));
+    container.updateState = () => {
+      if (labelText.includes("Admin")) isOn = Config.adminMode;
+      if (labelText.includes("Skip")) isOn = Config.skipMinigames;
+      if (labelText.includes("Speedrun")) isOn = Config.speedrunMode;
+      
+      box.setFillStyle(isOn ? 0x00ff00 : 0x222222);
+      check.setText(isOn ? "X" : "");
+      label.setColor(isOn ? "#00ff00" : "#aaaaaa");
+    };
+
+    box.on("pointerover", () => {
+      const isLocked = (labelText.includes("Admin") || labelText.includes("Skip")) && Config.speedrunMode;
+      if (!isLocked) box.setStrokeStyle(2, 0xffffff);
+    });
     box.on("pointerout", () => box.setStrokeStyle(2, 0x555555));
     box.on("pointerdown", () => {
+      const isLocked = (labelText.includes("Admin") || labelText.includes("Skip")) && Config.speedrunMode;
+      if (isLocked) {
+        this.cameras.main.shake(100, 0.005);
+        return;
+      }
       isOn = !isOn;
       box.setFillStyle(isOn ? 0x00ff00 : 0x222222);
       check.setText(isOn ? "X" : "");
       onChange(isOn);
+      this.refreshToggles();
     });
 
     container.add([box, check, label]);
