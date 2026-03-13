@@ -25,7 +25,7 @@ export class PCMonitorFrame {
     this.container = this.scene.add.container(centerX, centerY);
     this.container.setDepth(DEPTH.UI);
 
-    // 1. Vollbild-Abdunkelung
+    // 1. Vollbild-Abdunkelung (immer full size)
     const backdrop = this.scene.add.rectangle(
       0,
       0,
@@ -35,6 +35,8 @@ export class PCMonitorFrame {
       0.85,
     );
     this.container.add(backdrop);
+    // Keep backdrop unscaled by making sure it covers even more area
+    backdrop.setScale(1.5);
 
     // 2. Monitor Körper (äußerer Rahmen - dunkelgrau)
     const monitorBody = this.scene.add
@@ -151,6 +153,9 @@ export class PCMonitorFrame {
 
     // 10. Screen Glow Effekt (subtil)
     this.addGlowEffect();
+
+    // SCALING UP EVERYTHING
+    this.container.setScale(1.3);
 
     return this.container;
   }

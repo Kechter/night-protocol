@@ -84,6 +84,7 @@ export class SimonSaysScene extends Phaser.Scene {
 
     // 2. Container für das Minigame
     this.container = this.add.container(centerX, centerY);
+    this.container.setScale(1.25);
 
     // Hintergrund des Terminals (Vergrößert für 3x3)
     const bg = this.add

@@ -19,7 +19,7 @@ export class UIScene extends Phaser.Scene {
 
   createInventoryUI() {
     this.uiGroup = this.add.group();
-    this.slotCount = 5;
+    this.slotCount = 6;
     this.noteSlotCount = 3;
     this.slotSize = 40;
     this.gap = 8;

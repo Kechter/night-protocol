@@ -47,6 +47,7 @@ export class WireTaskScene extends Phaser.Scene {
     );
 
     const panel = this.add.container(centerX, centerY);
+    panel.setScale(1.25);
     const bg = this.add
       .rectangle(0, 0, 500, 400, 0x2c3e50)
       .setStrokeStyle(4, 0x95a5a6);

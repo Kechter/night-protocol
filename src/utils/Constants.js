@@ -36,6 +36,7 @@ export const KEY_CONFIG = {
   "keycard_b": { color: 0x0055ff, name: "Keycard B (Blue)" },
   "keycard_c": { color: 0x00ff00, name: "Keycard C (Green)" },
   "keycard_d": { color: 0xffff00, name: "Keycard D (Yellow)" },
+  "keycard_e": { color: 0xff00ff, name: "Keycard E (Purple)" },
   "master_key": { color: 0xffffff, name: "Master Key" },
 
   default: { color: 0xffffff, name: "Generic Key" },

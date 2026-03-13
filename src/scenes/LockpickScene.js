@@ -57,6 +57,7 @@ export class LockpickScene extends Phaser.Scene {
 
     // Container für das Minigame
     this.container = this.add.container(centerX, centerY);
+    this.container.setScale(1.25);
 
     // Schloss Hintergrund (Kreis)
     const lockBg = this.add

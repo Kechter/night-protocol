@@ -49,6 +49,7 @@ export class SignalTuningScene extends Phaser.Scene {
       0.9,
     );
     this.container = this.add.container(centerX, centerY);
+    this.container.setScale(1.25);
 
     const bg = this.add
       .rectangle(0, -50, 600, 300, 0x001100)

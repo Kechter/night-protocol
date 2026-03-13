@@ -60,7 +60,7 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     difficulties.forEach((key, i) => {
       const cfg = DIFFICULTY_SETTINGS[key];
-      const y = 200 + i * 90;
+      const y = 190 + i * 110; // Increased spacing between cards
       this.createCard(W / 2, y, key, cfg, i);
     });
 
@@ -84,7 +84,7 @@ export class DifficultySelectScene extends Phaser.Scene {
   createCard(x, y, key, cfg, index) {
     const W = this.cameras.main.width;
     const cardW = 440;
-    const cardH = 75;
+    const cardH = 95; // Increased card height
 
     const container = this.add.container(x, y);
 
@@ -102,7 +102,7 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Label
     const label = this.add
-      .text(-cardW / 2 + 24, -16, `[ ${cfg.label} ]`, {
+      .text(-cardW / 2 + 24, -20, `[ ${cfg.label} ]`, { // Adjusted Y offset
         fontFamily: "monospace",
         fontSize: "26px",
         color: cfg.colorHex,
@@ -113,7 +113,7 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Subtitle
     const sub = this.add
-      .text(-cardW / 2 + 24, 14, cfg.subtitle, {
+      .text(-cardW / 2 + 24, 10, cfg.subtitle, { // Adjusted Y offset
         fontFamily: "monospace",
         fontSize: "17px",
         color: "#888888",
@@ -121,15 +121,15 @@ export class DifficultySelectScene extends Phaser.Scene {
       .setOrigin(0, 0.5);
     container.add(sub);
 
-    // Stats preview (right side of card)
-    const statsText = `Zeit ×${cfg.minigameTimeMultiplier.toFixed(1)}   Bots ${cfg.botChaseSpeed}px/s   Sicht ${cfg.visionRange}px`;
+    // Stats preview (right side of card) - moved down and formatted
+    const statsText = `Zeit: x${cfg.minigameTimeMultiplier.toFixed(1)} | Bots: ${cfg.botChaseSpeed}px/s | Sicht: ${cfg.visionRange}px`;
     const stats = this.add
-      .text(cardW / 2 - 20, 0, statsText, {
+      .text(-cardW / 2 + 24, 34, statsText, { // Adjusted Y offset to fit inside new cardH
         fontFamily: "monospace",
-        fontSize: "14px",
+        fontSize: "13px",
         color: "#555555",
       })
-      .setOrigin(1, 0.5);
+      .setOrigin(0, 0.5);
     container.add(stats);
 
     // Hit area
@@ -170,7 +170,7 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Toggle 1: Admin Mode
     const adminToggle = this.createToggle(
-      -120,
+      -90,
       0,
       "Admin Mode",
       Config.adminMode,
@@ -182,7 +182,7 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Toggle 2: Skip Minigames (Türen automatisch)
     const skipToggle = this.createToggle(
-      120,
+      90,
       0,
       "Skip Minigames",
       Config.skipMinigames,
@@ -191,6 +191,15 @@ export class DifficultySelectScene extends Phaser.Scene {
       }
     );
     container.add(skipToggle);
+
+    // Fullscreen Hint
+    this.add
+      .text(x, y + 40, "[F11] Vollbild empfohlen für das beste Erlebnis", {
+        fontFamily: "monospace",
+        fontSize: "14px",
+        color: "#888888",
+      })
+      .setOrigin(0.5);
 
     return container;
   }

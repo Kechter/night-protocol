@@ -52,6 +52,7 @@ export class TimingHackScene extends Phaser.Scene {
     );
 
     this.container = this.add.container(centerX, centerY);
+    this.container.setScale(1.25);
 
     // Panel Background
     const bg = this.add

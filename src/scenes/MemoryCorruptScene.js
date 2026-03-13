@@ -70,6 +70,25 @@ export class MemoryCorruptScene extends Phaser.Scene {
 
     // Ersten Slot highlighten
     this.updateSelection();
+
+    // Abort Button
+    const abortBtn = this.add
+      .text(0, content.y + content.height / 2 - 10, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "14px",
+        color: "#ff0000",
+        backgroundColor: "#220000",
+        padding: { x: 5, y: 3 }
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      this.endGame(false);
+    });
+    this.monitor.add(abortBtn);
   }
 
   generateMemorySlots() {

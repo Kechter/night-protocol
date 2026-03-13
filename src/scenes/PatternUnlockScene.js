@@ -47,6 +47,7 @@ export class PatternUnlockScene extends Phaser.Scene {
       0.9,
     );
     this.container = this.add.container(centerX, centerY);
+    this.container.setScale(1.25);
 
     // Panel
     const bg = this.add

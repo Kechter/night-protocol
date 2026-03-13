@@ -63,10 +63,10 @@ export class PasswordCrackScene extends Phaser.Scene {
     const PAD_X = (PAD_LEFT + PAD_RIGHT) / 2;
 
     // Button metrics
-    const BTN = 38;
-    const BTN_GAP = 4;
+    const BTN = 40;
+    const BTN_GAP = 5;
     const STEP = BTN + BTN_GAP;
-    const SECTION_GAP = 10;
+    const SECTION_GAP = 12;
 
     // ── LEFT column: "ATTEMPT LOG" header ────────────────────
     this.monitor.add(
@@ -76,19 +76,20 @@ export class PasswordCrackScene extends Phaser.Scene {
           fontSize: "16px",
           color: "#888888",
         })
+        .setPadding(2, 2, 2, 2)
         .setOrigin(0.5, 0),
     );
 
     // Column legend - properly colored
     const legendGreen = this.add
-      .text(LOG_X - 70, TOP + 32, "\u25cf richtig", {
+      .text(LOG_X - 60, TOP + 32, "\u25cf richtig", {
         fontFamily: "monospace",
         fontSize: "12px",
         color: "#00ff00",
       })
       .setOrigin(0, 0);
     const legendYellow = this.add
-      .text(LOG_X + 10, TOP + 32, "\u25cf falsche Stelle", {
+      .text(LOG_X + 20, TOP + 32, "\u25cf falsche Stelle", {
         fontFamily: "monospace",
         fontSize: "12px",
         color: "#ffdd00",
@@ -104,42 +105,40 @@ export class PasswordCrackScene extends Phaser.Scene {
     this.monitor.add(dvg);
 
     // ═══════════════════════════════════════════════════════════
-    // RIGHT column: cursor-based vertical stack layout
-    // Each element is placed at cursorY (top edge), then
-    // cursorY advances by the element's full height + gap.
-    // This makes overlap IMPOSSIBLE regardless of font size.
+    // RIGHT column: Dynamic Layout
     // ═══════════════════════════════════════════════════════════
-    let cursorY = TOP + 8;
+    let cursorY = TOP + 10;
 
     // ─── 1. Rules block ──────────────────────────────────────
     const rulesLines = [
       "REGELN:",
-      "Jede Ziffer kommt nur 1x im Code vor.",
+      "Jede Ziffer nur 1x.",
       "",
       "\u25a0 Gr\u00fcn  = richtige Stelle",
       "\u25a0 Gelb  = falsche Stelle",
       "\u25a0 Grau  = nicht im Code",
     ];
     if (this.isEasyMode) {
-      rulesLines.push("\u2605 Richtige werden fixiert!");
+      rulesLines.push("\u2605 Richtige fixiert!"); // Kürzere Fassung
     }
     const rulesText = this.add
       .text(PAD_X, cursorY, rulesLines.join("\n"), {
         fontFamily: "monospace",
-        fontSize: "11px",
+        fontSize: "12px", // etwas größer
         color: "#668866",
         lineSpacing: 2,
       })
+      .setPadding(4, 4, 4, 4)
       .setOrigin(0.5, 0);
     this.monitor.add(rulesText);
-    cursorY += rulesText.height + SECTION_GAP;
+    cursorY += rulesText.height + SECTION_GAP; // Dynamic height
 
     // ─── 2. Separator line ───────────────────────────────────
     const sepG = this.add.graphics();
     sepG.lineStyle(1, 0x003300, 0.5);
     sepG.lineBetween(PAD_LEFT, cursorY, PAD_RIGHT, cursorY);
     this.monitor.add(sepG);
-    cursorY += SECTION_GAP;
+    cursorY += SECTION_GAP; // Dynamic height
 
     // ─── 3. Status text ──────────────────────────────────────
     this.statusText = this.add
@@ -150,7 +149,7 @@ export class PasswordCrackScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0);
     this.monitor.add(this.statusText);
-    cursorY += this.statusText.height + SECTION_GAP;
+    cursorY += this.statusText.height + SECTION_GAP; // Dynamic height
 
     // ─── 4. Input display (4 digit slots) ────────────────────
     const INPUT_H = BTN;
@@ -167,14 +166,15 @@ export class PasswordCrackScene extends Phaser.Scene {
       const t = this.add
         .text(x, inputCenterY, "_", {
           fontFamily: "monospace",
-          fontSize: "20px",
+          fontSize: "22px",
           color: "#00ff00",
         })
+        .setPadding(4, 4, 4, 4)
         .setOrigin(0.5);
       this.inputTexts.push(t);
       this.monitor.add(t);
     }
-    cursorY += INPUT_H + SECTION_GAP;
+    cursorY += INPUT_H + SECTION_GAP; // Dynamic height
 
     // ─── 5. Numpad (3×3 + bottom row) ────────────────────────
     const NP_LEFT = PAD_X - STEP;
@@ -207,9 +207,9 @@ export class PasswordCrackScene extends Phaser.Scene {
 
     // OK — tall button to the right of the 3×3 grid
     this.makeColorBtn(
-      NP_LEFT + 3 * STEP + 4,
+      NP_LEFT + 3 * STEP + 8, // etwas weiter rechts
       cursorY + BTN / 2 + STEP,
-      BTN - 4,
+      BTN, // Gleiche Breite wie Tasten
       BTN * 2 + BTN_GAP,
       "OK",
       0x003300,
@@ -219,11 +219,30 @@ export class PasswordCrackScene extends Phaser.Scene {
     );
 
     // ── Attempt container (left column) ──────────────────────
-    this.attemptsContainer = this.add.container(LOG_X, TOP + 56);
+    this.attemptsContainer = this.add.container(LOG_X, TOP + 100);
     this.monitor.add(this.attemptsContainer);
 
     // ── Generate secret code ──────────────────────────────────
     this.generateSecretCode();
+
+    // ── ABORT Button ──────────────────────────────────────────
+    const abortBtn = this.add
+      .text(0, BOT - 20, "[ ABORT ]", {
+        fontFamily: "monospace",
+        fontSize: "16px",
+        color: "#ff0000",
+        backgroundColor: "#220000",
+        padding: { x: 5, y: 3 }
+      })
+      .setOrigin(0.5)
+      .setInteractive({ useHandCursor: true });
+    
+    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
+    abortBtn.on("pointerdown", () => {
+      this.endGame(false);
+    });
+    this.monitor.add(abortBtn);
   }
 
   // ──────────────────────────────────────────────────────────────
@@ -246,6 +265,7 @@ export class PasswordCrackScene extends Phaser.Scene {
           fontSize: "18px",
           color: "#00ff00",
         })
+        .setPadding(4, 4, 4, 4)
         .setOrigin(0.5),
     );
   }
@@ -266,6 +286,7 @@ export class PasswordCrackScene extends Phaser.Scene {
           fontSize: "15px",
           color: textColor,
         })
+        .setPadding(4, 4, 4, 4)
         .setOrigin(0.5),
     );
   }
@@ -293,7 +314,8 @@ export class PasswordCrackScene extends Phaser.Scene {
     this.attemptsContainer.removeAll(true);
 
     this.attempts.forEach((attempt, index) => {
-      const y = index * 30;
+      // Flexibler Platz pro Eintrag - Abstand basierend auf der Höhe für garantierte Trennung
+      const y = index * 42; // Deutlich weiter unten, relativ zum attemptsContainer
 
       // Row number
       this.attemptsContainer.add(
@@ -308,7 +330,7 @@ export class PasswordCrackScene extends Phaser.Scene {
 
       // Wordle-style per-position feedback: colored backgrounds behind digits
       attempt.code.forEach((digit, di) => {
-        const posX = -70 + di * 30;
+        const posX = -70 + di * 35; // Größerer Abstand zwischen Rechtecken
         const hint = attempt.positionHints[di];
 
         // Background color per hint
@@ -322,7 +344,7 @@ export class PasswordCrackScene extends Phaser.Scene {
         }
 
         const bg = this.add
-          .rectangle(posX, y, 26, 26, bgColor)
+          .rectangle(posX, y, 32, 32, bgColor) // Etwas größer (32x32 statt 28x28)
           .setStrokeStyle(
             1,
             hint === "green"
@@ -344,10 +366,12 @@ export class PasswordCrackScene extends Phaser.Scene {
           this.add
             .text(posX, y, digit.toString(), {
               fontFamily: "monospace",
-              fontSize: "18px",
+              fontSize: "20px", // Größere Schrift
               color: textColor,
+              position: "absolute",
               fontStyle: hint === "green" ? "bold" : "normal",
             })
+            .setPadding(4, 4, 4, 4) // Prevents clipping in WebGL/Canvas
             .setOrigin(0.5, 0.5),
         );
       });

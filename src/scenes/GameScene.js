@@ -181,6 +181,9 @@ export class GameScene extends Phaser.Scene {
       console.log("ADMIN MODE: Giving all keycards to player");
       this.player.inventory.addKey("keycard_a");
       this.player.inventory.addKey("keycard_b");
+      this.player.inventory.addKey("keycard_c");
+      this.player.inventory.addKey("keycard_d");
+      this.player.inventory.addKey("keycard_e");
       this.player.inventory.addKey("master_key");
       this.player.inventory.addKey("keycard_red");
       this.player.inventory.addKey("keycard_blue");
