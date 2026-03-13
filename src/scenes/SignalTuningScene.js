@@ -129,26 +129,26 @@ export class SignalTuningScene extends Phaser.Scene {
       -200,
       yPos,
       "< FREQ",
-      () => (this.currentFreq = Math.max(1, this.currentFreq - 0.1)),
+      (delta) => (this.currentFreq = Math.max(1, this.currentFreq - 6 * (delta / 1000))),
     );
     this.createButton(
       -100,
       yPos,
       "FREQ >",
-      () => (this.currentFreq = Math.min(10, this.currentFreq + 0.1)),
+      (delta) => (this.currentFreq = Math.min(10, this.currentFreq + 6 * (delta / 1000))),
     );
 
     this.createButton(
       100,
       yPos,
       "< AMP",
-      () => (this.currentAmp = Math.max(10, this.currentAmp - 2)),
+      (delta) => (this.currentAmp = Math.max(10, this.currentAmp - 120 * (delta / 1000))),
     );
     this.createButton(
       200,
       yPos,
       "AMP >",
-      () => (this.currentAmp = Math.min(100, this.currentAmp + 2)),
+      (delta) => (this.currentAmp = Math.min(100, this.currentAmp + 120 * (delta / 1000))),
     );
   }
 
@@ -190,7 +190,7 @@ export class SignalTuningScene extends Phaser.Scene {
 
     if (this.buttons) {
       this.buttons.forEach((btn) => {
-        if (btn.isDown) btn.updateCallback();
+        if (btn.isDown) btn.updateCallback(delta);
       });
     }
 

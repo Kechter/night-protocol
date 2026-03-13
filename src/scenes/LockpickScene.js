@@ -282,11 +282,12 @@ export class LockpickScene extends Phaser.Scene {
     if (!this.cursors) return; // Guard against admin mode early exit
 
     // Schlüssel drehen – Arrow keys ODER WASD (A/D)
+    const rotationSpeed = 120; // 120 degrees per second
     if (this.cursors.left.isDown || this.keyA.isDown) {
-      this.keyAngle -= 2;
+      this.keyAngle -= rotationSpeed * (delta / 1000);
     }
     if (this.cursors.right.isDown || this.keyD.isDown) {
-      this.keyAngle += 2;
+      this.keyAngle += rotationSpeed * (delta / 1000);
     }
 
     // Winkel frei laufen lassen (volle 360° Drehung)
