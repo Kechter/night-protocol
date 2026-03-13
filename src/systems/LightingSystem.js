@@ -20,6 +20,11 @@ export class LightingSystem {
     this.darkCanvas.height = mapHeight;
     this.darkCtx = this.darkCanvas.getContext("2d");
 
+    // Ensure old texture is gone
+    if (this.scene.textures.exists("darknessCanvas")) {
+      this.scene.textures.remove("darknessCanvas");
+    }
+
     // Create Phaser image from canvas texture
     this.scene.textures.addCanvas("darknessCanvas", this.darkCanvas);
     this.darknessImage = this.scene.add.image(0, 0, "darknessCanvas");

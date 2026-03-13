@@ -8,6 +8,10 @@ export class GameOverScene extends Phaser.Scene {
     super({ key: "GameOverScene" });
   }
 
+  init() {
+    this.isTransitioning = false;
+  }
+
   create() {
     const W = this.cameras.main.width;
     const H = this.cameras.main.height;
@@ -81,9 +85,16 @@ export class GameOverScene extends Phaser.Scene {
     retryBtn.on("pointerover", () => retryBtn.setColor("#ffffff"));
     retryBtn.on("pointerout", () => retryBtn.setColor("#ff0000"));
     retryBtn.on("pointerdown", () => {
+      if (this.isTransitioning) return;
+      this.isTransitioning = true;
+      retryBtn.disableInteractive();
+      menuBtn.disableInteractive();
+
       this.cameras.main.fadeOut(400, 0, 0, 0);
       this.cameras.main.once("camerafadeoutcomplete", () => {
         this.scene.stop("GameOverScene");
+        this.scene.stop("UIScene");
+        this.scene.stop("GameScene");
         this.scene.start("GameScene");
         this.scene.launch("UIScene");
       });
@@ -104,9 +115,16 @@ export class GameOverScene extends Phaser.Scene {
     menuBtn.on("pointerover", () => menuBtn.setColor("#aaaaaa"));
     menuBtn.on("pointerout", () => menuBtn.setColor("#555555"));
     menuBtn.on("pointerdown", () => {
+      if (this.isTransitioning) return;
+      this.isTransitioning = true;
+      retryBtn.disableInteractive();
+      menuBtn.disableInteractive();
+
       this.cameras.main.fadeOut(400, 0, 0, 0);
       this.cameras.main.once("camerafadeoutcomplete", () => {
         this.scene.stop("GameOverScene");
+        this.scene.stop("UIScene");
+        this.scene.stop("GameScene");
         this.scene.start("DifficultySelectScene");
       });
     });

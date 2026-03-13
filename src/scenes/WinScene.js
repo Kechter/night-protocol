@@ -11,6 +11,7 @@ export class WinScene extends Phaser.Scene {
 
   init(data) {
     this.stats = data || {};
+    this.isTransitioning = false;
   }
 
   create() {
@@ -98,10 +99,17 @@ export class WinScene extends Phaser.Scene {
       btn.on("pointerover", () => btn.setColor("#ffffff"));
       btn.on("pointerout", () => btn.setColor("#00ff00"));
       btn.on("pointerdown", () => {
+        if (this.isTransitioning) return;
+        this.isTransitioning = true;
+        
+        btn.disableInteractive();
+        if (submitBtn) submitBtn.disableInteractive();
+
         this.cameras.main.fadeOut(400, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => {
           this.scene.stop("WinScene");
           this.scene.stop("UIScene");
+          this.scene.stop("GameScene"); // Force stop GameScene just in case
           this.scene.start("DifficultySelectScene");
         });
       });
@@ -110,6 +118,8 @@ export class WinScene extends Phaser.Scene {
       this.input.keyboard.once("keydown-ESC", () => btn.emit("pointerdown"));
       this.input.keyboard.once("keydown-ENTER", () => btn.emit("pointerdown"));
     });
+
+    let submitBtn = null; // Reference for the replay button to disable
 
     if (this.stats.finalTime) {
       this.time.delayedCall(totalDelay - 400, () => {
@@ -148,7 +158,7 @@ export class WinScene extends Phaser.Scene {
       loop: true
     });
 
-    const submitBtn = this.add.text(x + 300, y, "[ SUBMIT ]", {
+    submitBtn = this.add.text(x + 300, y, "[ SUBMIT ]", {
         fontFamily: "monospace",
         fontSize: "22px",
         color: "#00ffff",
@@ -159,6 +169,9 @@ export class WinScene extends Phaser.Scene {
     .setInteractive({ useHandCursor: true });
 
     submitBtn.on("pointerdown", async () => {
+        if (this.isTransitioning) return;
+        this.isTransitioning = true;
+
         const finalName = nameText.text.replace("_", "").trim() || "ANON";
         submitBtn.setText("[ SAVING... ]").disableInteractive();
         
@@ -166,12 +179,14 @@ export class WinScene extends Phaser.Scene {
         await lootLocker.setPlayerName(finalName);
 
         // 2. Submit Score
-        // (Leaderboard IDs would be configured in reality)
         const diffId = getDifficulty().id;
         await lootLocker.submitScore(diffId, this.stats.finalTime);
 
         submitBtn.setText("[ SAVED! ]").setColor("#00ff00");
         this.time.delayedCall(1000, () => {
+            this.scene.stop("WinScene");
+            this.scene.stop("UIScene");
+            this.scene.stop("GameScene");
             this.scene.start("LeaderboardScene");
         });
     });

@@ -58,9 +58,26 @@ export class GameScene extends Phaser.Scene {
   }
 
   shutdown() {
+    // Stop lighting system
     if (this.lightingSystem) {
       this.lightingSystem.destroy();
       this.lightingSystem = null;
+    }
+
+    // Explicitly remove persistent event listeners
+    this.events.off("unlockDoor");
+    this.events.off("spawnKey");
+    this.events.off("disableBots");
+    this.events.off("disableAlarm");
+    this.events.off("triggerAlarm");
+    this.events.off("winGame");
+    this.events.off("shutdown");
+    this.events.off("destroy");
+    this.events.off("resume");
+
+    // Stop all BGM of this scene
+    if (this.soundManager) {
+        this.soundManager.stopBGM();
     }
   }
 
