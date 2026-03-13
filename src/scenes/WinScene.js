@@ -103,7 +103,7 @@ export class WinScene extends Phaser.Scene {
         this.isTransitioning = true;
         
         btn.disableInteractive();
-        if (submitBtn) submitBtn.disableInteractive();
+        if (this.submitBtn) this.submitBtn.disableInteractive();
 
         this.cameras.main.fadeOut(400, 0, 0, 0);
         this.cameras.main.once("camerafadeoutcomplete", () => {
@@ -118,8 +118,6 @@ export class WinScene extends Phaser.Scene {
       this.input.keyboard.once("keydown-ESC", () => btn.emit("pointerdown"));
       this.input.keyboard.once("keydown-ENTER", () => btn.emit("pointerdown"));
     });
-
-    let submitBtn = null; // Reference for the replay button to disable
 
     if (this.stats.finalTime) {
       this.time.delayedCall(totalDelay - 400, () => {
@@ -158,7 +156,7 @@ export class WinScene extends Phaser.Scene {
       loop: true
     });
 
-    submitBtn = this.add.text(x + 300, y, "[ SUBMIT ]", {
+    this.submitBtn = this.add.text(x + 300, y, "[ SUBMIT ]", {
         fontFamily: "monospace",
         fontSize: "22px",
         color: "#00ffff",
@@ -168,12 +166,12 @@ export class WinScene extends Phaser.Scene {
     .setOrigin(0.5)
     .setInteractive({ useHandCursor: true });
 
-    submitBtn.on("pointerdown", async () => {
+    this.submitBtn.on("pointerdown", async () => {
         if (this.isTransitioning) return;
         this.isTransitioning = true;
 
         const finalName = nameText.text.replace("_", "").trim() || "ANON";
-        submitBtn.setText("[ SAVING... ]").disableInteractive();
+        this.submitBtn.setText("[ SAVING... ]").disableInteractive();
         
         // 1. Set Name
         await lootLocker.setPlayerName(finalName);
@@ -182,7 +180,7 @@ export class WinScene extends Phaser.Scene {
         const diffId = getDifficulty().id;
         await lootLocker.submitScore(diffId, this.stats.finalTime);
 
-        submitBtn.setText("[ SAVED! ]").setColor("#00ff00");
+        this.submitBtn.setText("[ SAVED! ]").setColor("#00ff00");
         this.time.delayedCall(1000, () => {
             this.scene.stop("WinScene");
             this.scene.stop("UIScene");
