@@ -13,6 +13,7 @@ export const DIFFICULTY = {
 
 export const DIFFICULTY_SETTINGS = {
   easy: {
+    id: "easy",
     label: "EASY",
     subtitle: "Gemütlich erkunden",
     color: 0x00ff88,
@@ -46,6 +47,7 @@ export const DIFFICULTY_SETTINGS = {
   },
 
   normal: {
+    id: "normal",
     label: "NORMAL",
     subtitle: "Standard Erfahrung",
     color: 0x00ccff,
@@ -76,6 +78,7 @@ export const DIFFICULTY_SETTINGS = {
   },
 
   hard: {
+    id: "hard",
     label: "HARD",
     subtitle: "Kein Spielraum",
     color: 0xff8800,
@@ -106,6 +109,7 @@ export const DIFFICULTY_SETTINGS = {
   },
 
   hardcore: {
+    id: "hardcore",
     label: "HARDCORE",
     subtitle: "Kein Pardon",
     color: 0xff0000,

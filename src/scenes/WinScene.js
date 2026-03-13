@@ -167,8 +167,8 @@ export class WinScene extends Phaser.Scene {
 
         // 2. Submit Score
         // (Leaderboard IDs would be configured in reality)
-        const diff = getDifficulty().key;
-        await lootLocker.submitScore(diff, this.stats.finalTime);
+        const diffId = getDifficulty().id;
+        await lootLocker.submitScore(diffId, this.stats.finalTime);
 
         submitBtn.setText("[ SAVED! ]").setColor("#00ff00");
         this.time.delayedCall(1000, () => {
