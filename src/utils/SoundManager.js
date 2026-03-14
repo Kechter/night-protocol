@@ -51,6 +51,14 @@ export class SoundManager {
   playError() {
     this.scene.sound.play("error", { volume: this.sfxVolume * 0.7 });
   }
+
+  playHit() {
+    this.scene.sound.play("ui_click", { volume: this.sfxVolume * 0.4, detune: 500 }); // High pitched click for hit
+  }
+
+  playMiss() {
+    this.scene.sound.play("error", { volume: this.sfxVolume * 0.3, detune: -500 }); // Low dull buzz for miss
+  }
 }
 
 // Global instance getter
@@ -59,8 +67,8 @@ let globalSoundManager = null;
 export function getSoundManager(scene) {
   if (!globalSoundManager && scene) {
     globalSoundManager = new SoundManager(scene);
-  } else if (globalSoundManager && scene && globalSoundManager.scene !== scene) {
-    // Update scene reference to active scene
+  } else if (globalSoundManager && scene) {
+    // Update scene reference to active scene to ensure sounds play in current context
     globalSoundManager.scene = scene;
   }
   return globalSoundManager;

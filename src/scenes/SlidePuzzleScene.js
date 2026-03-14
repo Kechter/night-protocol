@@ -1,6 +1,7 @@
 import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 export class SlidePuzzleScene extends Phaser.Scene {
   constructor() {
@@ -57,40 +58,47 @@ export class SlidePuzzleScene extends Phaser.Scene {
       .rectangle(0, 0, 400, 450, 0x222222)
       .setStrokeStyle(4, 0x00ff00);
     this.container.add(bg);
+    this.soundManager = getSoundManager(this);
 
     const title = this.add
-      .text(0, -180, "DATA DEFRAG", {
-        fontFamily: "monospace",
-        fontSize: "24px",
+      .text(0, -185, "DATEN DEFRAG", {
+        fontFamily: "VT323",
+        fontSize: "32px",
         color: "#00ff00",
-        fontStyle: "bold",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(title);
 
     // Timer display
     this.timerText = this.add
-      .text(165, -180, this.formatTime(this.timeRemaining), {
-        fontFamily: "monospace",
-        fontSize: "14px",
+      .text(180, -185, this.formatTime(this.timeRemaining), {
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#00ff00",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(1, 0.5);
     this.container.add(this.timerText);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 210, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 195, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      this.soundManager.playClick();
       this.inputActive = false;
       this.isComplete = true;
       if (this.timerEvent) this.timerEvent.remove();
@@ -195,14 +203,18 @@ export class SlidePuzzleScene extends Phaser.Scene {
         .setInteractive({ useHandCursor: true });
 
       // Klick Event direkt am Rechteck
-      rect.on("pointerdown", () => this.handleTileClick(index));
+      rect.on("pointerover", () => this.soundManager.playHover());
+      rect.on("pointerdown", () => {
+        this.soundManager.playClick();
+        this.handleTileClick(index);
+      });
 
       const text = this.add
         .text(0, 0, String(val), {
-          fontFamily: "monospace",
-          fontSize: "40px",
+          fontFamily: "VT323",
+          fontSize: "48px",
           color: "#00ff00",
-          fontStyle: "bold",
+          padding: { x: 2, y: 2 }
         })
         .setOrigin(0.5);
       // Text muss ignoriert werden für Klicks, damit er den Klick auf rect nicht blockt
@@ -250,14 +262,16 @@ export class SlidePuzzleScene extends Phaser.Scene {
       });
 
       const winText = this.add
-        .text(0, 200, "DEFRAGMENTATION COMPLETE", {
-          fontFamily: "monospace",
-          fontSize: "20px",
+        .text(0, 205, "DEFRAGMENTATION COMPLETE", {
+          fontFamily: "VT323",
+          fontSize: "24px",
           color: "#00ff00",
           backgroundColor: "#000",
+          padding: { x: 5, y: 5 }
         })
         .setOrigin(0.5);
       this.container.add(winText);
+      this.soundManager.playSuccess();
 
       this.time.delayedCall(1500, () => {
         if (this.onResult) this.onResult(true);

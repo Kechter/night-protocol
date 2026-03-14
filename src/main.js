@@ -8,6 +8,7 @@ import { IntroScene } from "./scenes/IntroScene.js";
 import { WinScene } from "./scenes/WinScene.js";
 import { GameOverScene } from "./scenes/GameOverScene.js";
 import { LeaderboardScene } from "./scenes/LeaderboardScene.js";
+import { PauseScene } from "./scenes/PauseScene.js";
 // Alte Minigames
 import { SimonSaysScene } from "./scenes/SimonSaysScene.js";
 import { WireTaskScene } from "./scenes/WireTaskScene.js";
@@ -58,6 +59,7 @@ const config = {
     WinScene,
     GameOverScene,
     LeaderboardScene,
+    PauseScene,
     // Minigames
     SimonSaysScene,
     WireTaskScene,

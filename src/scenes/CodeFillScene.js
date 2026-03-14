@@ -2,6 +2,7 @@ import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
 import { PCMonitorFrame } from "../ui/PCMonitorFrame.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 /**
  * CodeFillScene - Code Completion Minigame
@@ -42,6 +43,7 @@ export class CodeFillScene extends Phaser.Scene {
     this.monitor.create();
 
     const content = this.monitor.getContentArea();
+    this.soundManager = getSoundManager(this);
 
     // Code Challenge generieren
     this.challenge = this.generateChallenge();
@@ -55,30 +57,39 @@ export class CodeFillScene extends Phaser.Scene {
     // Timer anzeigen
     this.createTimer(content);
 
-    // Status Text
     this.statusText = this.add
       .text(
         0,
-        content.y + content.height / 2 - 20,
-        `GAP 1/${this.challenge.gaps.length}`,
-        { fontFamily: "monospace", fontSize: "14px", color: "#ffff00" },
+        content.y + content.height / 2 - 25,
+        `LÜCKE 1/${this.challenge.gaps.length}`,
+        { 
+          fontFamily: "VT323", 
+          fontSize: "24px", 
+          color: "#ffff00", 
+          padding: { x: 10, y: 5 } 
+        },
       )
       .setOrigin(0.5);
     this.monitor.add(this.statusText);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, content.y + content.height / 2 + 10, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, content.y + content.height / 2 + 5, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      this.soundManager.playClick();
       if (this.timerEvent) this.timerEvent.remove();
       this.isComplete = true;
       if (this.onResult) this.onResult(false);
@@ -217,8 +228,8 @@ export class CodeFillScene extends Phaser.Scene {
   }
 
   createCodeDisplay(content) {
-    const startY = content.y - content.height / 2 + 40;
-    const lineHeight = 28;
+    const startY = content.y - content.height / 2 + 50;
+    const lineHeight = 32;
 
     this.codeTexts = [];
     this.gapButtons = [];
@@ -229,9 +240,10 @@ export class CodeFillScene extends Phaser.Scene {
       // Zeilennummer
       const lineNum = this.add
         .text(-content.width / 2 + 10, y, `${index + 1}`, {
-          fontFamily: "monospace",
-          fontSize: "14px",
+          fontFamily: "VT323",
+          fontSize: "18px",
           color: "#555555",
+          padding: { x: 2, y: 2 }
         })
         .setOrigin(0, 0.5);
       this.monitor.add(lineNum);
@@ -246,9 +258,10 @@ export class CodeFillScene extends Phaser.Scene {
         // Vor der Lücke
         const beforeText = this.add
           .text(-content.width / 2 + 40, y, parts[0], {
-            fontFamily: "monospace",
-            fontSize: "14px",
+            fontFamily: "VT323",
+            fontSize: "18px",
             color: "#00ff00",
+            padding: { x: 2, y: 2 }
           })
           .setOrigin(0, 0.5);
         this.monitor.add(beforeText);
@@ -257,11 +270,11 @@ export class CodeFillScene extends Phaser.Scene {
         const gapX = beforeText.x + beforeText.width;
         const gapButton = this.add
           .text(gapX, y, "________", {
-            fontFamily: "monospace",
-            fontSize: "14px",
+            fontFamily: "VT323",
+            fontSize: "18px",
             color: "#ffff00",
             backgroundColor: "#333300",
-            padding: { x: 4, y: 2 },
+            padding: { x: 6, y: 4 },
           })
           .setOrigin(0, 0.5)
           .setInteractive({ useHandCursor: true });
@@ -273,10 +286,11 @@ export class CodeFillScene extends Phaser.Scene {
 
         // Nach der Lücke
         const afterText = this.add
-          .text(gapButton.x + gapButton.width + 4, y, parts[1] || "", {
-            fontFamily: "monospace",
-            fontSize: "14px",
+          .text(gapButton.x + gapButton.width + 10, y, parts[1] || "", {
+            fontFamily: "VT323",
+            fontSize: "18px",
             color: "#00ff00",
+            padding: { x: 2, y: 2 }
           })
           .setOrigin(0, 0.5);
         this.monitor.add(afterText);
@@ -284,9 +298,10 @@ export class CodeFillScene extends Phaser.Scene {
         // Normale Code-Zeile
         const codeText = this.add
           .text(-content.width / 2 + 40, y, line, {
-            fontFamily: "monospace",
-            fontSize: "14px",
+            fontFamily: "VT323",
+            fontSize: "18px",
             color: "#00ff00",
+            padding: { x: 2, y: 2 }
           })
           .setOrigin(0, 0.5);
         this.monitor.add(codeText);
@@ -309,9 +324,10 @@ export class CodeFillScene extends Phaser.Scene {
     // Label
     const label = this.add
       .text(-content.width / 2 + 20, panelY - 20, "SELECT VALUE:", {
-        fontFamily: "monospace",
-        fontSize: "12px",
+        fontFamily: "VT323",
+        fontSize: "16px",
         color: "#888888",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0, 0.5);
     this.monitor.add(label);
@@ -341,17 +357,18 @@ export class CodeFillScene extends Phaser.Scene {
 
       const btn = this.add
         .text(x, 0, option, {
-          fontFamily: "monospace",
-          fontSize: "14px",
+          fontFamily: "VT323",
+          fontSize: "18px",
           color: "#00ff00",
           backgroundColor: "#004400",
-          padding: { x: 8, y: 6 },
+          padding: { x: 12, y: 8 },
         })
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
 
       btn.on("pointerover", () => {
         btn.setBackgroundColor("#006600");
+        this.soundManager.playHover();
       });
 
       btn.on("pointerout", () => {
@@ -359,6 +376,7 @@ export class CodeFillScene extends Phaser.Scene {
       });
 
       btn.on("pointerdown", () => {
+        this.soundManager.playClick();
         this.selectOption(index, option);
       });
 
@@ -426,9 +444,14 @@ export class CodeFillScene extends Phaser.Scene {
     this.timerText = this.add
       .text(
         content.width / 2 - 20,
-        content.y - content.height / 2 + 20,
+        content.y - content.height / 2 + 25,
         this.formatTime(this.timeRemaining),
-        { fontFamily: "monospace", fontSize: "16px", color: "#00ff00" },
+        { 
+          fontFamily: "VT323", 
+          fontSize: "24px", 
+          color: "#00ff00",
+          padding: { x: 5, y: 5 }
+        },
       )
       .setOrigin(1, 0.5);
     this.monitor.add(this.timerText);
@@ -479,10 +502,12 @@ export class CodeFillScene extends Phaser.Scene {
       this.monitor.showSuccess("CODE COMPILED");
       this.statusText.setText("SYSTEM BYPASSED");
       this.statusText.setColor("#00ff00");
+      this.soundManager.playSuccess();
     } else {
       this.monitor.showError("SYNTAX ERROR");
       this.statusText.setText("COMPILATION FAILED");
       this.statusText.setColor("#ff0000");
+      this.soundManager.playError();
     }
 
     this.time.delayedCall(1500, () => {

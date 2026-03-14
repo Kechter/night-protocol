@@ -1,5 +1,6 @@
 import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 export class WireTaskScene extends Phaser.Scene {
   constructor() {
@@ -52,30 +53,37 @@ export class WireTaskScene extends Phaser.Scene {
       .rectangle(0, 0, 500, 400, 0x2c3e50)
       .setStrokeStyle(4, 0x95a5a6);
     panel.add(bg);
+    this.soundManager = getSoundManager(this);
 
     // Header
     const title = this.add
-      .text(0, -170, "REPAIR DATA LINKS", {
-        fontFamily: "monospace",
-        fontSize: "24px",
+      .text(0, -170, "DATENLEITUNGEN REPARIEREN", {
+        fontFamily: "VT323",
+        fontSize: "32px",
         color: "#ffffff",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     panel.add(title);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 175, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 175, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      this.soundManager.playClick();
       if (this.onResult) this.onResult(false);
       this.scene.stop();
       this.scene.resume("GameScene");
@@ -115,9 +123,11 @@ export class WireTaskScene extends Phaser.Scene {
       socket.side = "left";
       socket.isConnected = false;
 
+      socket.on("pointerover", () => this.soundManager.playHover());
       // Event Listener für Drag-Start
       socket.on("pointerdown", (pointer) => {
         if (!socket.isConnected) {
+          this.soundManager.playClick();
           this.startDrag(socket, pointer);
         }
       });
@@ -174,12 +184,10 @@ export class WireTaskScene extends Phaser.Scene {
   }
 
   updateActiveLine(pointer) {
-    // Mausposition ins Panel-Koordinatensystem umrechnen
-    // Panel ist zentriert
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
-    const localX = pointer.x - centerX;
-    const localY = pointer.y - centerY;
+    const localX = (pointer.x - centerX) / this.panel.scaleX;
+    const localY = (pointer.y - centerY) / this.panel.scaleY;
 
     this.redrawWires();
 
@@ -192,13 +200,11 @@ export class WireTaskScene extends Phaser.Scene {
   }
 
   stopDrag() {
-    // Wir prüfen manuell Kollision, da dropZones manchmal tricky sind mit Layern
-    // Pointer Position holen
     const pointer = this.input.activePointer;
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
-    const localX = pointer.x - centerX;
-    const localY = pointer.y - centerY;
+    const localX = (pointer.x - centerX) / this.panel.scaleX;
+    const localY = (pointer.y - centerY) / this.panel.scaleY;
 
     let foundTarget = null;
 
@@ -235,6 +241,7 @@ export class WireTaskScene extends Phaser.Scene {
     endSocket.setStrokeStyle(2, 0xffffff); // Visuelles Feedback
 
     this.connections++;
+    this.soundManager.playHit();
 
     if (this.connections >= this.totalWires) {
       this.time.delayedCall(500, () => this.winGame());
@@ -263,13 +270,14 @@ export class WireTaskScene extends Phaser.Scene {
     // Erfolgsnachricht
     const successText = this.add
       .text(centerX, centerY, "SYSTEM RESTORED", {
-        fontFamily: "monospace",
-        fontSize: "32px",
+        fontFamily: "VT323",
+        fontSize: "48px",
         color: "#00ff00",
         backgroundColor: "#000000",
+        padding: { x: 15, y: 15 },
       })
-      .setOrigin(0.5)
-      .setPadding(10);
+      .setOrigin(0.5);
+    this.soundManager.playSuccess();
 
     this.time.delayedCall(1500, () => {
       if (this.onResult) this.onResult(true);

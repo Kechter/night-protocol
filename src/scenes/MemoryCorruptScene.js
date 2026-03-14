@@ -2,6 +2,7 @@ import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
 import { PCMonitorFrame } from "../ui/PCMonitorFrame.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 /**
  * MemoryCorruptScene - Hex Memory Editor Minigame
@@ -38,10 +39,11 @@ export class MemoryCorruptScene extends Phaser.Scene {
     }
 
     // Monitor Frame erstellen
-    this.monitor = new PCMonitorFrame(this, "MEMORY EDITOR - 0x7FFE0000");
+    this.monitor = new PCMonitorFrame(this, "SPEICHER-EDITOR - 0x7FFE0000");
     this.monitor.create();
 
     const content = this.monitor.getContentArea();
+    this.soundManager = getSoundManager(this);
 
     // Memory Slots generieren
     this.generateMemorySlots();
@@ -60,10 +62,11 @@ export class MemoryCorruptScene extends Phaser.Scene {
 
     // Status
     this.statusText = this.add
-      .text(0, content.y + content.height / 2 - 30, "MATCH ALL TARGET VALUES", {
-        fontFamily: "monospace",
-        fontSize: "14px",
+      .text(0, content.y + content.height / 2 - 40, "ZIELWERTE ANPASSEN", {
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#ffff00",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     this.monitor.add(this.statusText);
@@ -73,19 +76,23 @@ export class MemoryCorruptScene extends Phaser.Scene {
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, content.y + content.height / 2 - 10, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "14px",
+      .text(0, content.y + content.height / 2 - 10, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
         backgroundColor: "#220000",
-        padding: { x: 5, y: 3 }
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      this.soundManager.playClick();
       this.endGame(false);
     });
     this.monitor.add(abortBtn);
@@ -123,9 +130,10 @@ export class MemoryCorruptScene extends Phaser.Scene {
     headers.forEach((header, index) => {
       const text = this.add
         .text(headerX[index], headerY, header, {
-          fontFamily: "monospace",
-          fontSize: "12px",
+          fontFamily: "VT323",
+          fontSize: "18px",
           color: "#666666",
+          padding: { x: 2, y: 2 }
         })
         .setOrigin(0.5);
       this.monitor.add(text);
@@ -160,9 +168,10 @@ export class MemoryCorruptScene extends Phaser.Scene {
       // Address
       elements.addressText = this.add
         .text(-150, y, this.formatHex(slot.address, 8), {
-          fontFamily: "monospace",
-          fontSize: "14px",
+          fontFamily: "VT323",
+          fontSize: "18px",
           color: "#888888",
+          padding: { x: 2, y: 2 }
         })
         .setOrigin(0.5);
       this.slotsContainer.add(elements.addressText);
@@ -170,11 +179,11 @@ export class MemoryCorruptScene extends Phaser.Scene {
       // Current Value (editable)
       elements.valueText = this.add
         .text(-40, y, `[${this.formatHex(slot.current, 2)}]`, {
-          fontFamily: "monospace",
-          fontSize: "18px",
+          fontFamily: "VT323",
+          fontSize: "22px",
           color: "#00ff00",
           backgroundColor: "#002200",
-          padding: { x: 6, y: 4 },
+          padding: { x: 8, y: 4 },
         })
         .setOrigin(0.5);
       this.slotsContainer.add(elements.valueText);
@@ -182,9 +191,10 @@ export class MemoryCorruptScene extends Phaser.Scene {
       // Target Value
       elements.targetText = this.add
         .text(60, y, this.formatHex(slot.target, 2), {
-          fontFamily: "monospace",
-          fontSize: "16px",
+          fontFamily: "VT323",
+          fontSize: "20px",
           color: "#ff6600",
+          padding: { x: 2, y: 2 }
         })
         .setOrigin(0.5);
       this.slotsContainer.add(elements.targetText);
@@ -192,9 +202,10 @@ export class MemoryCorruptScene extends Phaser.Scene {
       // Status
       elements.statusText = this.add
         .text(150, y, slot.isCorrect ? "✓" : "✗", {
-          fontFamily: "monospace",
-          fontSize: "18px",
+          fontFamily: "VT323",
+          fontSize: "22px",
           color: slot.isCorrect ? "#00ff00" : "#ff0000",
+          padding: { x: 2, y: 2 }
         })
         .setOrigin(0.5);
       this.slotsContainer.add(elements.statusText);
@@ -234,11 +245,11 @@ export class MemoryCorruptScene extends Phaser.Scene {
   }
 
   createControls(content) {
-    const controlY = content.y + content.height / 2 - 80;
+    const controlY = content.y + content.height / 2 - 100;
 
     // Background Panel
     const panelBg = this.add
-      .rectangle(0, controlY, content.width - 40, 50, 0x002200)
+      .rectangle(0, controlY, content.width - 40, 55, 0x002200)
       .setStrokeStyle(1, 0x00aa00);
     this.monitor.add(panelBg);
 
@@ -255,28 +266,35 @@ export class MemoryCorruptScene extends Phaser.Scene {
     buttons.forEach((btn) => {
       const button = this.add
         .text(btn.x, controlY, btn.text, {
-          fontFamily: "monospace",
-          fontSize: "14px",
+          fontFamily: "VT323",
+          fontSize: "18px",
           color: "#00ff00",
           backgroundColor: "#004400",
-          padding: { x: 8, y: 6 },
+          padding: { x: 10, y: 8 },
         })
         .setOrigin(0.5)
         .setInteractive({ useHandCursor: true });
 
-      button.on("pointerover", () => button.setBackgroundColor("#006600"));
+      button.on("pointerover", () => {
+        button.setBackgroundColor("#006600");
+        this.soundManager.playHover();
+      });
       button.on("pointerout", () => button.setBackgroundColor("#004400"));
-      button.on("pointerdown", btn.action);
+      button.on("pointerdown", () => {
+        this.soundManager.playClick();
+        btn.action();
+      });
 
       this.monitor.add(button);
     });
 
     // Keyboard Hint
     const hint = this.add
-      .text(0, controlY + 35, "[↑/↓] Select  [←/→] Adjust  [Q/E] ±16", {
-        fontFamily: "monospace",
-        fontSize: "10px",
-        color: "#555555",
+      .text(0, controlY + 45, "[↑/↓] Auswählen  [←/→] Ändern  [Q/E] ±16", {
+        fontFamily: "VT323",
+        fontSize: "18px",
+        color: "#666666",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
     this.monitor.add(hint);
@@ -318,9 +336,14 @@ export class MemoryCorruptScene extends Phaser.Scene {
     this.timerText = this.add
       .text(
         content.width / 2 - 20,
-        content.y - content.height / 2 + 20,
+        content.y - content.height / 2 + 25,
         this.formatTime(this.timeRemaining),
-        { fontFamily: "monospace", fontSize: "16px", color: "#00ff00" },
+        { 
+          fontFamily: "VT323", 
+          fontSize: "24px", 
+          color: "#00ff00",
+          padding: { x: 5, y: 5 }
+        },
       )
       .setOrigin(1, 0.5);
     this.monitor.add(this.timerText);
@@ -363,10 +386,12 @@ export class MemoryCorruptScene extends Phaser.Scene {
       this.monitor.showSuccess("MEMORY PATCHED");
       this.statusText.setText("ALL VALUES MATCHED");
       this.statusText.setColor("#00ff00");
+      this.soundManager.playSuccess();
     } else {
       this.monitor.showError("TIMEOUT");
       this.statusText.setText("MEMORY CORRUPT");
       this.statusText.setColor("#ff0000");
+      this.soundManager.playError();
     }
 
     this.time.delayedCall(1500, () => {

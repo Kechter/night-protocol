@@ -56,7 +56,7 @@ export class NoteItem extends Phaser.Physics.Arcade.Sprite {
       // Notification
       const uiScene = this.scene.scene.get("UIScene");
       if (uiScene && uiScene.showNotification) {
-        uiScene.showNotification("NEUE NOTIZ ERHALTEN", 0x00ffff);
+        uiScene.showNotification("NOTIZ GEFUNDEN: KLICKE UNTEN ZUM LESEN", 0x00ffff);
       }
 
       // Collect animation

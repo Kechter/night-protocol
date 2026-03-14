@@ -55,6 +55,7 @@ export class PasswordCrackScene extends Phaser.Scene {
     const content = this.monitor.getContentArea();
     const TOP = content.y - content.height / 2;
     const BOT = content.y + content.height / 2;
+    this.soundManager = getSoundManager(this);
 
     // Column split: left 45% = attempt log, right 55% = controls
     const DIVX = -content.width / 2 + content.width * 0.45;
@@ -72,28 +73,30 @@ export class PasswordCrackScene extends Phaser.Scene {
     // ── LEFT column: "ATTEMPT LOG" header ────────────────────
     this.monitor.add(
       this.add
-        .text(LOG_X, TOP + 10, "ATTEMPT LOG", {
-          fontFamily: "monospace",
-          fontSize: "16px",
+        .text(LOG_X, TOP + 10, "VERSUCHS-PROTOKOLL", {
+          fontFamily: "VT323",
+          fontSize: "24px",
           color: "#888888",
+          padding: { x: 10, y: 5 },
         })
-        .setPadding(2, 2, 2, 2)
         .setOrigin(0.5, 0),
     );
 
     // Column legend - properly colored
     const legendGreen = this.add
-      .text(LOG_X - 60, TOP + 32, "\u25cf richtig", {
-        fontFamily: "monospace",
-        fontSize: "12px",
+      .text(LOG_X - 60, TOP + 45, "\u25cf richtig", {
+        fontFamily: "VT323",
+        fontSize: "16px",
         color: "#00ff00",
+        padding: { x: 2, y: 2 },
       })
       .setOrigin(0, 0);
     const legendYellow = this.add
-      .text(LOG_X + 20, TOP + 32, "\u25cf falsche Stelle", {
-        fontFamily: "monospace",
-        fontSize: "12px",
+      .text(LOG_X + 20, TOP + 45, "\u25cf falsche Stelle", {
+        fontFamily: "VT323",
+        fontSize: "16px",
         color: "#ffdd00",
+        padding: { x: 2, y: 2 },
       })
       .setOrigin(0, 0);
     this.monitor.add(legendGreen);
@@ -124,12 +127,12 @@ export class PasswordCrackScene extends Phaser.Scene {
     }
     const rulesText = this.add
       .text(PAD_X, cursorY, rulesLines.join("\n"), {
-        fontFamily: "monospace",
-        fontSize: "12px", // etwas größer
+        fontFamily: "VT323",
+        fontSize: "18px",
         color: "#668866",
         lineSpacing: 2,
+        padding: { x: 5, y: 5 },
       })
-      .setPadding(4, 4, 4, 4)
       .setOrigin(0.5, 0);
     this.monitor.add(rulesText);
     cursorY += rulesText.height + SECTION_GAP; // Dynamic height
@@ -144,9 +147,10 @@ export class PasswordCrackScene extends Phaser.Scene {
     // ─── 3. Status text ──────────────────────────────────────
     this.statusText = this.add
       .text(PAD_X, cursorY, `${this.maxAttempts} VERSUCHE \u00dcBRIG`, {
-        fontFamily: "monospace",
-        fontSize: "16px",
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#ffff00",
+        padding: { x: 5, y: 5 },
       })
       .setOrigin(0.5, 0);
     this.monitor.add(this.statusText);
@@ -166,11 +170,11 @@ export class PasswordCrackScene extends Phaser.Scene {
       const x = PAD_X - (STEP * 1.5 - BTN_GAP / 2) + i * STEP;
       const t = this.add
         .text(x, inputCenterY, "_", {
-          fontFamily: "monospace",
-          fontSize: "22px",
+          fontFamily: "VT323",
+          fontSize: "32px",
           color: "#00ff00",
+          padding: { x: 4, y: 4 },
         })
-        .setPadding(4, 4, 4, 4)
         .setOrigin(0.5);
       this.inputTexts.push(t);
       this.monitor.add(t);
@@ -228,12 +232,12 @@ export class PasswordCrackScene extends Phaser.Scene {
 
     // ── ABORT Button ──────────────────────────────────────────
     const abortBtn = this.add
-      .text(0, BOT - 20, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, BOT - 25, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
         backgroundColor: "#220000",
-        padding: { x: 5, y: 3 }
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -272,11 +276,11 @@ export class PasswordCrackScene extends Phaser.Scene {
     this.monitor.add(
       this.add
         .text(x, y, label, {
-          fontFamily: "monospace",
-          fontSize: "18px",
+          fontFamily: "VT323",
+          fontSize: "24px",
           color: "#00ff00",
+          padding: { x: 4, y: 4 },
         })
-        .setPadding(4, 4, 4, 4)
         .setOrigin(0.5),
     );
   }
@@ -299,11 +303,11 @@ export class PasswordCrackScene extends Phaser.Scene {
     this.monitor.add(
       this.add
         .text(x, y, label, {
-          fontFamily: "monospace",
-          fontSize: "15px",
+          fontFamily: "VT323",
+          fontSize: "20px",
           color: textColor,
+          padding: { x: 4, y: 4 },
         })
-        .setPadding(4, 4, 4, 4)
         .setOrigin(0.5),
     );
   }
@@ -337,10 +341,11 @@ export class PasswordCrackScene extends Phaser.Scene {
       // Row number
       this.attemptsContainer.add(
         this.add
-          .text(-100, y, `${index + 1}.`, {
-            fontFamily: "monospace",
-            fontSize: "15px",
+          .text(-105, y, `${index + 1}.`, {
+            fontFamily: "VT323",
+            fontSize: "20px",
             color: "#555555",
+            padding: { x: 2, y: 2 },
           })
           .setOrigin(0, 0.5),
       );
@@ -382,13 +387,11 @@ export class PasswordCrackScene extends Phaser.Scene {
         this.attemptsContainer.add(
           this.add
             .text(posX, y, digit.toString(), {
-              fontFamily: "monospace",
-              fontSize: "20px", // Größere Schrift
+              fontFamily: "VT323",
+              fontSize: "26px",
               color: textColor,
-              position: "absolute",
-              fontStyle: hint === "green" ? "bold" : "normal",
+              padding: { x: 4, y: 4 },
             })
-            .setPadding(4, 4, 4, 4) // Prevents clipping in WebGL/Canvas
             .setOrigin(0.5, 0.5),
         );
       });
@@ -476,6 +479,7 @@ export class PasswordCrackScene extends Phaser.Scene {
     }
 
     this.updateAttemptsDisplay();
+    this.soundManager.playHit();
 
     const remaining = this.maxAttempts - this.attempts.length;
     this.statusText.setText(`${remaining} VERSUCHE \u00dcBRIG`);
@@ -556,11 +560,13 @@ export class PasswordCrackScene extends Phaser.Scene {
     if (success) {
       this.monitor.showSuccess("ACCESS GRANTED");
       this.statusText.setText("GEKNACKT!").setColor("#00ff00");
+      this.soundManager.playSuccess();
     } else {
       this.statusText
         .setText(`CODE WAR: ${this.secretCode.join("")}`)
         .setColor("#ff0000");
       this.monitor.showError("MAXIMUM ATTEMPTS");
+      this.soundManager.playError();
     }
     this.time.delayedCall(1500, () => {
       if (this.onResult) this.onResult(success);

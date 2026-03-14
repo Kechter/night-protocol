@@ -1,5 +1,7 @@
 import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
+import { PCMonitorFrame } from "../ui/PCMonitorFrame.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
 
 /**
@@ -58,6 +60,7 @@ export class LockpickScene extends Phaser.Scene {
     // Container für das Minigame
     this.container = this.add.container(centerX, centerY);
     this.container.setScale(1.25);
+    this.soundManager = getSoundManager(this); // Initialize sound manager here
 
     // Schloss Hintergrund (Kreis)
     const lockBg = this.add
@@ -85,50 +88,55 @@ export class LockpickScene extends Phaser.Scene {
 
     // Anleitung
     const instructions = this.add
-      .text(0, -180, "DREHE DEN SCHLÜSSEL IN DEN MARKIERTEN BEREICH", {
-        fontFamily: "monospace",
-        fontSize: "18px",
+      .text(0, -185, "DREHE DEN SCHLÜSSEL IN DEN MARKIERTEN BEREICH", {
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#888888",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(instructions);
 
     const hint = this.add
-      .text(0, 190, "[A/D  oder  ← →] Drehen   [SPACE] Halten", {
-        fontFamily: "monospace",
-        fontSize: "20px",
+      .text(0, 195, "[A/D  oder  ← →] Drehen   [SPACE] Halten", {
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#ffff00",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(hint);
 
     // Status Text
     this.statusText = this.add
-      .text(0, 158, "PIN 1/3", {
-        fontFamily: "monospace",
-        fontSize: "22px",
+      .text(0, 160, "PIN 1/3", {
+        fontFamily: "VT323",
+        fontSize: "28px",
         color: "#ffffff",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 230, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 195, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
-      this.isComplete = true;
-      if (this.onResult) this.onResult(false);
-      this.scene.stop();
-      this.scene.resume("GameScene");
+      this.soundManager.playClick();
+      this.endGame(false);
     });
     this.container.add(abortBtn);
 
@@ -246,9 +254,10 @@ export class LockpickScene extends Phaser.Scene {
 
     // Label
     const label = this.add.text(-100, 115, "DIETRICH", {
-      fontFamily: "monospace",
-      fontSize: "10px",
+      fontFamily: "VT323",
+      fontSize: "14px",
       color: "#666666",
+      padding: { x: 2, y: 2 }
     });
     this.container.add(label);
   }
@@ -319,6 +328,7 @@ export class LockpickScene extends Phaser.Scene {
         // Nicht im Sweet Spot - Schaden am Dietrich
         this.lockHealth -= delta * 0.05;
         this.updateHealthBar();
+        this.soundManager.playHit(); // Play hit sound when not in sweet spot and holding
 
         // Shake Effekt
         this.container.x =
@@ -349,6 +359,7 @@ export class LockpickScene extends Phaser.Scene {
 
     // Sound/Flash Effekt
     this.cameras.main.flash(100, 0, 255, 0);
+    this.soundManager.playSuccess(); // Play success sound for unlocking a pin
 
     if (this.currentPin >= this.pinsToUnlock) {
       // Alle Pins geknackt!
@@ -371,6 +382,7 @@ export class LockpickScene extends Phaser.Scene {
     if (success) {
       this.statusText.setText("SCHLOSS GEKNACKT!");
       this.statusText.setColor("#00ff00");
+      this.soundManager.playSuccess(); // Play success sound for game completion
 
       // Erfolgs-Animation
       this.tweens.add({
@@ -382,6 +394,7 @@ export class LockpickScene extends Phaser.Scene {
     } else {
       this.statusText.setText("DIETRICH GEBROCHEN!");
       this.statusText.setColor("#ff0000");
+      this.soundManager.playError(); // Play error sound for game failure
 
       // Bruch-Animation
       this.tweens.add({

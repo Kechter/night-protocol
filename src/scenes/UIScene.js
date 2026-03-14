@@ -11,6 +11,7 @@ export class UIScene extends Phaser.Scene {
     // Diese Szene hat KEINEN Zoom (Default 1) -> UI ist scharf und passt auf den Schirm
     this.notesData = [];
     this.createInventoryUI();
+    this.createTopLeftUI();
 
     // Listener: Wenn GameScene sagt "Update Inventar", machen wir das
     const gameScene = this.scene.get("GameScene");
@@ -22,16 +23,18 @@ export class UIScene extends Phaser.Scene {
       this.createSpeedrunTimer();
       gameScene.events.on("updateTimer", this.updateTimerUI, this);
     }
+
+    this.setupGlobalControls();
   }
 
   createSpeedrunTimer() {
     this.timerText = this.add
       .text(this.cameras.main.width / 2, 40, "00:00.00", {
-        fontFamily: "monospace",
-        fontSize: "32px",
+        fontFamily: "VT323",
+        fontSize: "42px",
         color: "#00ff00",
         backgroundColor: "#001100",
-        padding: { x: 10, y: 5 },
+        padding: { x: 15, y: 5 },
         stroke: "#004400",
         strokeThickness: 2,
       })
@@ -199,10 +202,10 @@ export class UIScene extends Phaser.Scene {
     // Text
     const notifText = this.add
       .text(0, 0, text, {
-        fontFamily: "monospace",
-        fontSize: "16px",
+        fontFamily: "VT323",
+        fontSize: "22px",
         color: hexColor,
-        fontStyle: "bold",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
     notifContainer.add(notifText);
@@ -228,18 +231,84 @@ export class UIScene extends Phaser.Scene {
     });
   }
 
+  setupGlobalControls() {
+    this.input.keyboard.on("keydown-ESC", () => {
+      // Check if we are in a state where pause is allowed
+      const isPaused = this.scene.isActive("PauseScene");
+      if (isPaused) return;
+
+      const forbiddenScenes = [
+        "ControlsScene",
+        "DifficultySelectScene",
+        "IntroScene",
+        "WinScene",
+        "GameOverScene",
+        "PreloadScene",
+        "LeaderboardScene",
+      ];
+      const isForbidden = forbiddenScenes.some((s) => this.scene.isActive(s));
+
+      if (!isForbidden) {
+        this.pauseGame();
+      }
+    });
+  }
+
+  pauseGame() {
+    // Pause main game and UI
+    this.scene.pause("GameScene");
+    this.scene.pause("UIScene");
+
+    // Pause any active minigames
+    const minigames = [
+      "LockpickScene",
+      "PasswordCrackScene",
+      "MemoryCorruptScene",
+      "SimonSaysScene",
+      "WireTaskScene",
+      "TimingHackScene",
+      "PatternUnlockScene",
+      "SlidePuzzleScene",
+      "SignalTuningScene",
+      "CodeFillScene",
+      "NoteViewScene",
+    ];
+
+    minigames.forEach((key) => {
+      if (this.scene.isActive(key)) {
+        this.scene.pause(key);
+      }
+    });
+
+    this.scene.launch("PauseScene");
+  }
+
+  createTopLeftUI() {
+    this.add.text(20, 20, "[ESC] MENÜ / PAUSE", {
+      fontFamily: "VT323",
+      fontSize: "24px",
+      color: "#00ff00",
+      padding: { x: 10, y: 5 },
+      backgroundColor: "#001100"
+    }).setAlpha(0.7);
+  }
+
   createFullscreenButton() {
     // Simple Text Button top-right
     const btn = this.add
-      .text(this.scale.width - 20, 20, "[ Fullscreen ]", {
+      .text(this.scale.width - 20, 20, "[ VOLLBILD ]", {
+        fontFamily: "VT323",
         fontSize: "24px",
         fill: "#ffffff",
         backgroundColor: "#000000",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(1, 0)
-      .setPadding(10)
       .setInteractive({ useHandCursor: true })
       .setScrollFactor(0); // Static UI
+
+    btn.on("pointerover", () => btn.setColor("#00ff00"));
+    btn.on("pointerout", () => btn.setColor("#ffffff"));
 
     btn.on("pointerdown", () => {
       if (this.scale.isFullscreen) {

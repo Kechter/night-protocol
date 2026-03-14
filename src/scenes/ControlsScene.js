@@ -25,18 +25,19 @@ export class ControlsScene extends Phaser.Scene {
     // Header
     this.add
       .text(W / 2, 55, "> NIGHT PROTOCOL v1.0", {
-        fontFamily: "monospace",
-        fontSize: "20px",
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#555555",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
 
     this.add
       .text(W / 2, 108, "STEUERUNG", {
-        fontFamily: "monospace",
-        fontSize: "52px",
+        fontFamily: "VT323",
+        fontSize: "64px",
         color: "#00ff00",
-        fontStyle: "bold",
+        padding: { x: 20, y: 10 }
       })
       .setOrigin(0.5);
 
@@ -96,10 +97,10 @@ export class ControlsScene extends Phaser.Scene {
       // Section title
       this.add
         .text(W / 2, cursorY, section.title, {
-          fontFamily: "monospace",
-          fontSize: "20px",
+          fontFamily: "VT323",
+          fontSize: "28px",
           color: section.color,
-          fontStyle: "bold",
+          padding: { x: 10, y: 5 }
         })
         .setOrigin(0.5);
 
@@ -124,9 +125,10 @@ export class ControlsScene extends Phaser.Scene {
         // Key badge
         const badge = this.add
           .text(COL_L, rowY, `[ ${row.key} ]`, {
-            fontFamily: "monospace",
-            fontSize: "18px",
+            fontFamily: "VT323",
+            fontSize: "22px",
             color: "#ffff00",
+            padding: { x: 10, y: 5 }
           })
           .setOrigin(1, 0.5);
 
@@ -142,9 +144,10 @@ export class ControlsScene extends Phaser.Scene {
         // Description
         this.add
           .text(COL_R, rowY, row.desc, {
-            fontFamily: "monospace",
-            fontSize: "18px",
+            fontFamily: "VT323",
+            fontSize: "22px",
             color: "#cccccc",
+            padding: { x: 10, y: 5 }
           })
           .setOrigin(0, 0.5);
       });
@@ -159,9 +162,10 @@ export class ControlsScene extends Phaser.Scene {
         H - 55,
         "[LINKSKLICK / ENTER]   Weiter zur Schwierigkeitsauswahl",
         {
-          fontFamily: "monospace",
-          fontSize: "20px",
+          fontFamily: "VT323",
+          fontSize: "24px",
           color: "#00ff00",
+          padding: { x: 15, y: 10 }
         },
       )
       .setOrigin(0.5);

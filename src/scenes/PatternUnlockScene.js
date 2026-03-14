@@ -1,6 +1,7 @@
 import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 export class PatternUnlockScene extends Phaser.Scene {
   constructor() {
@@ -57,41 +58,48 @@ export class PatternUnlockScene extends Phaser.Scene {
       .rectangle(0, 0, 400, 450, 0x222222)
       .setStrokeStyle(3, 0x9b59b6);
     this.container.add(bg);
+    this.soundManager = getSoundManager(this);
 
     // Titel
     const title = this.add
-      .text(0, -180, "PATTERN DECRYPT", {
-        fontFamily: "monospace",
-        fontSize: "24px",
+      .text(0, -185, "MUSTER ENTSCHLÜSSELN", {
+        fontFamily: "VT323",
+        fontSize: "32px",
         color: "#9b59b6",
-        fontStyle: "bold",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(title);
 
     // Status
     this.statusText = this.add
-      .text(0, 180, "OBSERVE SIGNAL", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 175, "MUSTER BEOBACHTEN", {
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#ffffff",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 220, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 205, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      this.soundManager.playClick();
       if (this.onResult) this.onResult(false);
       this.scene.stop();
       this.scene.resume("GameScene");
@@ -203,7 +211,7 @@ export class PatternUnlockScene extends Phaser.Scene {
     // After sequence finishes, allow input
     this.time.delayedCall(delay + 500, () => {
       this.graphics.clear();
-      this.statusText.setText("DRAW PATTERN");
+      this.statusText.setText("MUSTER NACHZEICHNEN");
       this.statusText.setColor("#ffff00");
       this.isInputMode = true;
     });
@@ -214,6 +222,7 @@ export class PatternUnlockScene extends Phaser.Scene {
 
     this.userPath = [dot.id];
     this.isDrawing = true;
+    this.soundManager.playHit();
     this.redrawUserPath();
   }
 
@@ -229,6 +238,7 @@ export class PatternUnlockScene extends Phaser.Scene {
       this.checkIntermediateDots(lastDot, dot);
 
       this.userPath.push(dot.id);
+      this.soundManager.playHit();
       this.redrawUserPath();
     }
   }
@@ -280,18 +290,20 @@ export class PatternUnlockScene extends Phaser.Scene {
       JSON.stringify(this.userPath) === JSON.stringify(this.targetPath);
 
     if (win) {
-      this.statusText.setText("PATTERN VERIFIED");
+      this.statusText.setText("MUSTER VERIFIZIERT");
       this.statusText.setColor("#00ff00");
       this.container.first.setStrokeStyle(4, 0x00ff00);
+      this.soundManager.playSuccess();
       this.time.delayedCall(1000, () => {
         if (this.onResult) this.onResult(true);
         this.scene.stop();
         this.scene.resume("GameScene");
       });
     } else {
-      this.statusText.setText("INVALID PATTERN");
+      this.statusText.setText("FALSCHES MUSTER");
       this.statusText.setColor("#ff0000");
       this.container.first.setStrokeStyle(4, 0xff0000);
+      this.soundManager.playError();
       this.graphics.lineStyle(4, 0xff0000, 1);
       this.graphics.strokePath(); // Rot nachzeichnen
 

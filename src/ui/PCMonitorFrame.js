@@ -91,10 +91,10 @@ export class PCMonitorFrame {
 
     const titleText = this.scene.add
       .text(0, -this.monitorHeight / 2 + 25, `> ${this.title}`, {
-        fontFamily: "monospace",
-        fontSize: "16px",
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#00ff00",
-        fontStyle: "bold",
+        padding: { x: 5, y: 5 },
       })
       .setOrigin(0.5);
     this.container.add(titleText);
@@ -239,12 +239,12 @@ export class PCMonitorFrame {
 
     const successText = this.scene.add
       .text(0, 0, message, {
-        fontFamily: "monospace",
-        fontSize: "32px",
+        fontFamily: "VT323",
+        fontSize: "48px",
         color: "#00ff00",
-        fontStyle: "bold",
         stroke: "#003300",
-        strokeThickness: 4,
+        strokeThickness: 6,
+        padding: { x: 10, y: 10 },
       })
       .setOrigin(0.5);
 
@@ -266,12 +266,12 @@ export class PCMonitorFrame {
 
     const errorText = this.scene.add
       .text(0, 0, message, {
-        fontFamily: "monospace",
-        fontSize: "32px",
+        fontFamily: "VT323",
+        fontSize: "48px",
         color: "#ff0000",
-        fontStyle: "bold",
         stroke: "#330000",
-        strokeThickness: 4,
+        strokeThickness: 6,
+        padding: { x: 10, y: 10 },
       })
       .setOrigin(0.5);
 

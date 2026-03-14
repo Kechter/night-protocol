@@ -48,20 +48,20 @@ export class NoteViewScene extends Phaser.Scene {
     // Title
     this.add
       .text(frameX - frameW / 2 + 25, headerY, `> ${this.noteTitle}`, {
-        fontFamily: "monospace",
-        fontSize: "16px",
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#00ff00",
-        fontStyle: "bold",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0, 0.5);
 
     // Close button [X]
     const closeBtn = this.add
       .text(frameX + frameW / 2 - 25, headerY, "[X]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#ff4444",
-        fontStyle: "bold",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(1, 0.5)
       .setInteractive({ useHandCursor: true });
@@ -75,11 +75,12 @@ export class NoteViewScene extends Phaser.Scene {
     const contentH = frameH - 80;
 
     this.add.text(frameX - frameW / 2 + 25, contentY, this.noteText, {
-      fontFamily: "monospace",
-      fontSize: "14px",
+      fontFamily: "VT323",
+      fontSize: "20px",
       color: "#00cc00",
       wordWrap: { width: frameW - 60 },
-      lineSpacing: 6,
+      lineSpacing: 8,
+      padding: { x: 5, y: 5 }
     });
 
     // Blink cursor at bottom

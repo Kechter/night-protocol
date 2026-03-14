@@ -1,6 +1,7 @@
 import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 export class SimonSaysScene extends Phaser.Scene {
   constructor() {
@@ -91,41 +92,48 @@ export class SimonSaysScene extends Phaser.Scene {
       .rectangle(0, 0, 340, 420, 0x222222)
       .setStrokeStyle(4, 0x00ff00);
     this.container.add(bg);
+    this.soundManager = getSoundManager(this);
 
     // Header Text
     const title = this.add
-      .text(0, -180, "SECURITY LEVEL 5", {
-        fontFamily: "monospace",
-        fontSize: "24px",
+      .text(0, -185, "SICHERHEITSSTUFE 5", {
+        fontFamily: "VT323",
+        fontSize: "32px",
         color: "#00ff00",
-        fontStyle: "bold",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(title);
 
     // Status Text
     this.statusText = this.add
-      .text(0, 180, "INITIALIZING...", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 175, "INITIALISIERUNG...", {
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#ffffff",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 220, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 205, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      this.soundManager.playClick();
       this.gameOver(false);
     });
     this.container.add(abortBtn);
@@ -142,10 +150,12 @@ export class SimonSaysScene extends Phaser.Scene {
       btn.colorData = c;
 
       // Klick Event
+      btn.on("pointerover", () => this.soundManager.playHover());
       btn.on("pointerdown", () => {
         if (this.inputActive) {
           this.handleInput(c.id);
           this.flashButton(btn);
+          this.soundManager.playHit();
         }
       });
 
@@ -159,7 +169,7 @@ export class SimonSaysScene extends Phaser.Scene {
 
   startNextRound() {
     this.round++;
-    this.statusText.setText(`SEQUENCE ${this.round}/${this.maxRounds}`);
+    this.statusText.setText(`SEQUENZ ${this.round}/${this.maxRounds}`);
     this.statusText.setColor("#ffffff");
     this.inputActive = false;
 
@@ -176,7 +186,7 @@ export class SimonSaysScene extends Phaser.Scene {
   playSequence(index) {
     if (index >= this.sequence.length) {
       this.inputActive = true;
-      this.statusText.setText("INPUT SEQUENCE");
+      this.statusText.setText("SEQUENZ WIEDERHOLEN");
       return;
     }
 
@@ -223,7 +233,7 @@ export class SimonSaysScene extends Phaser.Scene {
         this.gameOver(true);
       } else {
         this.inputActive = false;
-        this.statusText.setText("CORRECT!");
+        this.statusText.setText("KORREKT!");
         this.statusText.setColor("#00ff00");
         this.time.delayedCall(800, () => this.startNextRound());
       }
@@ -233,13 +243,15 @@ export class SimonSaysScene extends Phaser.Scene {
   gameOver(success) {
     this.inputActive = false;
     if (success) {
-      this.statusText.setText("SYSTEM BYPASSED");
+      this.statusText.setText("ZUGANG GEWÄHRT");
       this.statusText.setColor("#00ff00");
       this.container.first.setStrokeStyle(4, 0x00ff00);
+      this.soundManager.playSuccess();
     } else {
-      this.statusText.setText("BREACH DETECTED");
+      this.statusText.setText("ZUGANG VERWEIGERT");
       this.statusText.setColor("#ff0000");
       this.container.first.setStrokeStyle(4, 0xff0000);
+      this.soundManager.playError();
 
       this.tweens.add({
         targets: this.container,

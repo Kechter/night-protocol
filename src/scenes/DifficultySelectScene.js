@@ -35,18 +35,19 @@ export class DifficultySelectScene extends Phaser.Scene {
     // Header
     this.add
       .text(W / 2, 60, "> NIGHT PROTOCOL v1.0", {
-        fontFamily: "monospace",
-        fontSize: "20px",
+        fontFamily: "VT323",
+        fontSize: "24px",
         color: "#555555",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
 
     this.add
-      .text(W / 2, 108, "SELECT DIFFICULTY", {
-        fontFamily: "monospace",
-        fontSize: "52px",
+      .text(W / 2, 108, "SCHWIERIGKEITSGRAD", {
+        fontFamily: "VT323",
+        fontSize: "64px",
         color: "#00ff00",
-        fontStyle: "bold",
+        padding: { x: 20, y: 10 }
       })
       .setOrigin(0.5);
 
@@ -71,9 +72,10 @@ export class DifficultySelectScene extends Phaser.Scene {
     // Footer
     this.add
       .text(W / 2, H - 40, "[KLICKEN] Auswählen", {
-        fontFamily: "monospace",
-        fontSize: "18px",
+        fontFamily: "VT323",
+        fontSize: "22px",
         color: "#444444",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
 
@@ -90,8 +92,8 @@ export class DifficultySelectScene extends Phaser.Scene {
 
   createLeaderboardButton(x, y) {
     const btn = this.add.text(x, y, "[ GLOBAL LEADERBOARD ]", {
-      fontFamily: "monospace",
-      fontSize: "18px",
+      fontFamily: "VT323",
+      fontSize: "22px",
       color: "#00ffff",
       backgroundColor: "#002222",
       padding: { x: 15, y: 8 }
@@ -130,10 +132,10 @@ export class DifficultySelectScene extends Phaser.Scene {
     const label = this.add
       .text(-cardW / 2 + 24, -20, `[ ${cfg.label} ]`, {
         // Adjusted Y offset
-        fontFamily: "monospace",
-        fontSize: "26px",
+        fontFamily: "VT323",
+        fontSize: "32px",
         color: cfg.colorHex,
-        fontStyle: "bold",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0, 0.5);
     container.add(label);
@@ -142,9 +144,10 @@ export class DifficultySelectScene extends Phaser.Scene {
     const sub = this.add
       .text(-cardW / 2 + 24, 10, cfg.subtitle, {
         // Adjusted Y offset
-        fontFamily: "monospace",
-        fontSize: "17px",
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#888888",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0, 0.5);
     container.add(sub);
@@ -152,11 +155,11 @@ export class DifficultySelectScene extends Phaser.Scene {
     // Stats preview (right side of card) - moved down and formatted
     const statsText = `Zeit: x${cfg.minigameTimeMultiplier.toFixed(1)} | Bots: ${cfg.botChaseSpeed}px/s | Sicht: ${cfg.visionRange}px`;
     const stats = this.add
-      .text(-cardW / 2 + 24, 34, statsText, {
-        // Adjusted Y offset to fit inside new cardH
-        fontFamily: "monospace",
-        fontSize: "13px",
+      .text(-cardW / 2 + 24, 38, statsText, {
+        fontFamily: "VT323",
+        fontSize: "16px",
         color: "#555555",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0, 0.5);
     container.add(stats);
@@ -193,9 +196,10 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     this.add
       .text(0, -30, "-- GAME SETTINGS --", {
-        fontFamily: "monospace",
-        fontSize: "14px",
+        fontFamily: "VT323",
+        fontSize: "16px",
         color: "#555555",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
 
@@ -256,9 +260,10 @@ export class DifficultySelectScene extends Phaser.Scene {
     // Fullscreen Hint
     const hint = this.add
       .text(0, 70, "[F11] Vollbild empfohlen für das beste Erlebnis", {
-        fontFamily: "monospace",
-        fontSize: "14px",
+        fontFamily: "VT323",
+        fontSize: "16px",
         color: "#555555",
+        padding: { x: 5, y: 5 }
       })
       .setOrigin(0.5);
     container.add(hint);
@@ -281,16 +286,17 @@ export class DifficultySelectScene extends Phaser.Scene {
       .setInteractive({ useHandCursor: true });
 
     const check = this.add.text(-40, 0, isOn ? "X" : "", {
-      fontFamily: "monospace",
-      fontSize: "16px",
+      fontFamily: "VT323",
+      fontSize: "20px",
       color: "#000000",
-      fontStyle: "bold"
+      padding: { x: 2, y: 2 }
     }).setOrigin(0.5);
 
     const label = this.add.text(-20, 0, labelText, {
-      fontFamily: "monospace",
-      fontSize: "14px",
-      color: isOn ? "#00ff00" : "#aaaaaa"
+      fontFamily: "VT323",
+      fontSize: "18px",
+      color: isOn ? "#00ff00" : "#aaaaaa",
+      padding: { x: 5, y: 5 }
     }).setOrigin(0, 0.5);
 
     container.updateState = () => {

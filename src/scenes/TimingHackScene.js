@@ -1,4 +1,6 @@
 import { DEPTH } from "../utils/Constants.js";
+import { PCMonitorFrame } from "../ui/PCMonitorFrame.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
 
@@ -41,6 +43,8 @@ export class TimingHackScene extends Phaser.Scene {
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
+    // Sound
+    this.soundManager = getSoundManager(this);
     // Hintergrund
     this.add.rectangle(
       centerX,
@@ -62,50 +66,53 @@ export class TimingHackScene extends Phaser.Scene {
 
     // Titel
     const title = this.add
-      .text(0, -120, "TIMING OVERRIDE", {
-        fontFamily: "monospace",
-        fontSize: "24px",
+      .text(0, -125, "TIMING-ÜBERBRÜCKUNG", {
+        fontFamily: "VT323",
+        fontSize: "32px",
         color: "#3498db",
-        fontStyle: "bold",
+        padding: { x: 10, y: 5 },
       })
       .setOrigin(0.5);
     this.container.add(title);
 
     // Status
     this.statusText = this.add
-      .text(0, 100, `LOCKS REMAINING: ${this.hitsNeeded}`, {
-        fontFamily: "monospace",
-        fontSize: "18px",
+      .text(0, 105, `VERBLEIBENDE RIEGEL: ${this.hitsNeeded}`, {
+        fontFamily: "VT323",
+        fontSize: "26px",
         color: "#ffffff",
+        padding: { x: 10, y: 5 },
       })
       .setOrigin(0.5);
     this.container.add(this.statusText);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 135, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 145, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 10, y: 5 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
-      this.isLocked = true;
-      if (this.onResult) this.onResult(false);
-      this.scene.stop();
-      this.scene.resume("GameScene");
+      this.soundManager.playClick();
+      this.endGame(false);
     });
     this.container.add(abortBtn);
 
     // Lives display
     this.livesText = this.add
-      .text(0, -95, this.getLivesString(), {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, -90, this.getLivesString(), {
+        fontFamily: "monospace", // Keep monospace for hearts characters maybe
+        fontSize: "20px",
         color: "#ff4444",
       })
       .setOrigin(0.5);
@@ -148,8 +155,9 @@ export class TimingHackScene extends Phaser.Scene {
   }
 
   resetRound() {
-    // Zufällige Position für die Zone
-    const maxOffset = (this.barWidth - this.targetWidth) / 2;
+    // Zufällige Position für die Zone - Margin hinzugefügt damit es nie überlappt
+    const margin = 5;
+    const maxOffset = (this.barWidth - this.targetWidth) / 2 - margin;
     const randomX = Phaser.Math.Between(-maxOffset, maxOffset);
     this.targetZone.x = randomX;
     this.targetZone.width = this.targetWidth;
@@ -185,14 +193,16 @@ export class TimingHackScene extends Phaser.Scene {
     if (this.isLocked) return;
     this.isLocked = true;
 
-    // Kollisionsprüfung (Einfache X-Abstand Prüfung)
+    // Kollisionsprüfung (Mit kleiner Toleranz für besseres Spielgefühl)
     const dist = Math.abs(this.cursor.x - this.targetZone.x);
-    const hitWidth = this.targetWidth / 2 + this.cursor.width / 2;
+    // Wir nehmen die volle Breite der Zone + Cursor, aber geben 2px Extra-Toleranz (Spieler-freundlich)
+    const hitWidth = (this.targetWidth / 2) + (this.cursor.width / 2) + 2;
 
     if (dist < hitWidth) {
       // TREFFER
       this.currentHits++;
       this.targetZone.fillColor = 0xffffff;
+      this.soundManager.playHit(); // Play hit sound
 
       if (this.currentHits >= this.hitsNeeded) {
         this.winGame();
@@ -208,6 +218,7 @@ export class TimingHackScene extends Phaser.Scene {
       // DANEBEN — Leben abziehen
       this.lives--;
       this.targetZone.fillColor = 0xff0000;
+      this.soundManager.playMiss(); // Play miss sound
       if (this.livesText) this.livesText.setText(this.getLivesString());
 
       if (this.lives <= 0) {
@@ -233,16 +244,29 @@ export class TimingHackScene extends Phaser.Scene {
     );
   }
 
-  winGame() {
-    this.statusText.setText("ACCESS GRANTED");
-    this.statusText.setColor("#00ff00");
-    this.container.first.setStrokeStyle(4, 0x00ff00);
+  endGame(success) {
+    this.isLocked = true;
+    if (success) {
+      this.statusText.setText("ACCESS GRANTED");
+      this.statusText.setColor("#00ff00");
+      this.container.first.setStrokeStyle(4, 0x00ff00);
+      this.soundManager.playSuccess();
+    } else {
+      this.statusText.setText("LOCK JAMMED");
+      this.statusText.setColor("#ff0000");
+      this.container.first.setStrokeStyle(4, 0xff0000);
+      this.soundManager.playError();
+    }
 
     this.time.delayedCall(1000, () => {
-      if (this.onResult) this.onResult(true);
+      if (this.onResult) this.onResult(success);
       this.scene.stop();
       this.scene.resume("GameScene");
     });
+  }
+
+  winGame() {
+    this.endGame(true);
   }
 
   loseGame() {

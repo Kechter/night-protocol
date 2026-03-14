@@ -1,6 +1,7 @@
 import { DEPTH } from "../utils/Constants.js";
 import { Config } from "../utils/Config.js";
 import { getDifficulty } from "../utils/DifficultyConfig.js";
+import { getSoundManager } from "../utils/SoundManager.js";
 
 export class SignalTuningScene extends Phaser.Scene {
   constructor() {
@@ -55,6 +56,7 @@ export class SignalTuningScene extends Phaser.Scene {
       .rectangle(0, -50, 600, 300, 0x001100)
       .setStrokeStyle(4, 0x00aa00);
     this.container.add(bg);
+    this.soundManager = getSoundManager(this);
 
     const gridGraphics = this.add.graphics();
     gridGraphics.lineStyle(1, 0x003300);
@@ -71,10 +73,11 @@ export class SignalTuningScene extends Phaser.Scene {
 
     this.container.add(
       this.add
-        .text(0, -230, "SIGNAL CALIBRATION", {
-          fontFamily: "monospace",
-          fontSize: "24px",
+        .text(0, -240, "SIGNAL-KALIBRIERUNG", {
+          fontFamily: "VT323",
+          fontSize: "32px",
           color: "#00ff00",
+          padding: { x: 10, y: 5 }
         })
         .setOrigin(0.5),
     );
@@ -94,26 +97,32 @@ export class SignalTuningScene extends Phaser.Scene {
     this.container.add(this.progressBar);
 
     this.matchText = this.add
-      .text(0, 260, "MATCH SIGNAL...", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 260, "SIGNAL-ABGLEICH...", {
+        fontFamily: "VT323",
+        fontSize: "24px",
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     this.container.add(this.matchText);
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 290, "[ ABORT ]", {
-        fontFamily: "monospace",
-        fontSize: "16px",
+      .text(0, 305, "[ ABBRECHEN ]", {
+        fontFamily: "VT323",
+        fontSize: "20px",
         color: "#ff0000",
+        padding: { x: 12, y: 6 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
     
-    abortBtn.on("pointerover", () => abortBtn.setColor("#ffffff"));
+    abortBtn.on("pointerover", () => {
+      abortBtn.setColor("#ffffff");
+      this.soundManager.playHover();
+    });
     abortBtn.on("pointerout", () => abortBtn.setColor("#ff0000"));
     abortBtn.on("pointerdown", () => {
+      this.soundManager.playClick();
       this.isWon = true;
       if (this.onResult) this.onResult(false);
       this.scene.stop();
@@ -155,16 +164,20 @@ export class SignalTuningScene extends Phaser.Scene {
   createButton(x, y, text, callback) {
     const btn = this.add
       .text(x, y, text, {
-        fontFamily: "monospace",
-        fontSize: "18px",
+        fontFamily: "VT323",
+        fontSize: "22px",
         backgroundColor: "#333",
-        padding: { x: 10, y: 5 },
+        padding: { x: 12, y: 8 },
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
 
+    btn.on("pointerover", () => {
+      this.soundManager.playHover();
+    });
     btn.on("pointerdown", () => {
       btn.isDown = true;
+      this.soundManager.playClick();
     });
     btn.on("pointerup", () => {
       btn.isDown = false;
@@ -233,11 +246,17 @@ export class SignalTuningScene extends Phaser.Scene {
 
     if (freqDiff < this.tolerance && ampDiff < this.ampTolerance) {
       this.matchTime += delta;
-      this.matchText.setText("LOCKING SIGNAL...");
-      this.matchText.setColor("#00ff00");
+      const diff = freqDiff + ampDiff; // Assuming 'diff' is a sum of differences for a combined metric
+      if (diff < 15) { // This condition seems to be an additional check for "SIGNAL KORREKT"
+        this.matchText.setText("SIGNAL KORREKT");
+        this.matchText.setColor("#00ff00");
+      } else {
+        this.matchText.setText("SIGNAL ABGLEICH..."); // Original "LOCKING SIGNAL..." translated
+        this.matchText.setColor("#00ff00");
+      }
     } else {
       this.matchTime = Math.max(0, this.matchTime - delta * 0.5);
-      this.matchText.setText("NO SIGNAL");
+      this.matchText.setText("KEIN SIGNAL"); // Original "NO SIGNAL" translated
       this.matchText.setColor("#ff0000");
     }
 
@@ -257,6 +276,7 @@ export class SignalTuningScene extends Phaser.Scene {
 
     this.matchText.setText("SIGNAL LOCKED - ACCESS GRANTED");
     this.container.first.setStrokeStyle(4, 0x00ff00);
+    this.soundManager.playSuccess();
 
     // Jetzt läuft die Zeit weiter und dieser Call feuert:
     this.time.delayedCall(1000, () => {

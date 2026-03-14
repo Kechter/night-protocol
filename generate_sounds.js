@@ -100,15 +100,27 @@ for (let i = 0; i < errLen; i++) {
 }
 createWav(path.join(dir, 'error.wav'), sampleRate, 1, errSamples);
 
-// 5. Door Open (Sci-fi swoosh / noise sweep)
-const doorLen = Math.floor(sampleRate * 0.8);
+// 5. Door Open (Squeaky/Creaky Door)
+const doorLen = Math.floor(sampleRate * 1.5);
 const doorSamples = new Float32Array(doorLen);
 for (let i = 0; i < doorLen; i++) {
   const t = i / sampleRate;
-  let noise = Math.random() * 2 - 1;
-  // Envelope: quick attack, slow release
-  let env = t < 0.1 ? (t/0.1) : (1 - (t-0.1)/0.7);
-  doorSamples[i] = noise * env * 0.2;
+  // Squeak: high pitched resonant frequency with slight wobble
+  let squeakFreq = 2200 + Math.sin(2 * Math.PI * 6 * t) * 150;
+  let squeak = Math.sin(2 * Math.PI * squeakFreq * t);
+  
+  // Creak: random low-frequency wood-like impulses
+  let creak = 0;
+  if (t > 0.1 && Math.random() < 0.015) {
+    creak = (Math.random() * 2 - 1) * 0.6;
+  }
+  
+  // Combined sound with noise friction
+  let friction = (Math.random() * 2 - 1) * 0.05;
+  
+  // Envelope: slow opening, then sustained squeak, then fade
+  let env = t < 0.2 ? (t/0.2) : (1 - (t-0.2)/1.3);
+  doorSamples[i] = (squeak * 0.2 + creak * 0.4 + friction) * env * 0.2;
 }
 createWav(path.join(dir, 'door.wav'), sampleRate, 1, doorSamples);
 
