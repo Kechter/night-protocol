@@ -50,9 +50,9 @@ export class ControlsScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     // ── Control groups ──────────────────────────────────────
-    const COL_L = W * 0.38; // Give the keys a bit more space to the left
-    const COL_R = W * 0.43; // Move descriptions right so text isn't cut off or crammed
-    const LINE = 32; // tighter line height
+    const COL_L = W * 0.38;
+    const COL_R = W * 0.43;
+    const LINE = 28; // slightly tighter to fit on smaller viewports
 
     const sections = [
       {
@@ -91,7 +91,7 @@ export class ControlsScene extends Phaser.Scene {
       },
     ];
 
-    let cursorY = 200;
+    let cursorY = 185;
 
     sections.forEach((section) => {
       // Section title
@@ -152,14 +152,14 @@ export class ControlsScene extends Phaser.Scene {
           .setOrigin(0, 0.5);
       });
       
-      cursorY += 60 + section.rows.length * LINE;
+      cursorY += 50 + section.rows.length * LINE;
     });
 
     // ── Continue hint (blinking) ─────────────────────────────
     const hint = this.add
       .text(
         W / 2,
-        H - 55,
+        H - 65,
         "[LINKSKLICK / ENTER]   Weiter zur Schwierigkeitsauswahl",
         {
           fontFamily: "VT323",

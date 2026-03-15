@@ -64,6 +64,7 @@ export class KeyItem extends Phaser.Physics.Arcade.Sprite {
             const added = player.inventory.addKey(this.keyID);
             
             if (added) {
+                if (this.scene.soundManager) this.scene.soundManager.playPickup();
                 // UI Effekt: Key fliegt zur Inventar-Leiste (optional cool)
                 this.scene.tweens.add({
                     targets: this,

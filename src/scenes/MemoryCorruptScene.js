@@ -62,7 +62,7 @@ export class MemoryCorruptScene extends Phaser.Scene {
 
     // Status
     this.statusText = this.add
-      .text(0, content.y + content.height / 2 - 40, "ZIELWERTE ANPASSEN", {
+      .text(0, content.y + content.height / 2 - 65, "ZIELWERTE ANPASSEN", {
         fontFamily: "VT323",
         fontSize: "24px",
         color: "#ffff00",
@@ -76,7 +76,7 @@ export class MemoryCorruptScene extends Phaser.Scene {
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, content.y + content.height / 2 - 10, "[ ABBRECHEN ]", {
+      .text(0, content.y + content.height / 2 - 20, "[ ABBRECHEN ]", {
         fontFamily: "VT323",
         fontSize: "20px",
         color: "#ff0000",
@@ -245,7 +245,7 @@ export class MemoryCorruptScene extends Phaser.Scene {
   }
 
   createControls(content) {
-    const controlY = content.y + content.height / 2 - 100;
+    const controlY = content.y + content.height / 2 - 130;
 
     // Background Panel
     const panelBg = this.add
@@ -290,7 +290,7 @@ export class MemoryCorruptScene extends Phaser.Scene {
 
     // Keyboard Hint
     const hint = this.add
-      .text(0, controlY + 45, "[↑/↓] Auswählen  [←/→] Ändern  [Q/E] ±16", {
+      .text(0, controlY + 40, "[↑/↓] Auswählen  [←/→] Ändern  [Q/E] ±16", {
         fontFamily: "VT323",
         fontSize: "18px",
         color: "#666666",
@@ -318,6 +318,7 @@ export class MemoryCorruptScene extends Phaser.Scene {
       this.memorySlots.length - 1,
     );
     this.updateSelection();
+    if (this.soundManager) this.soundManager.playTerminalKey();
   }
 
   adjustValue(delta) {
@@ -326,6 +327,7 @@ export class MemoryCorruptScene extends Phaser.Scene {
     const slot = this.memorySlots[this.selectedSlot];
     slot.current = (slot.current + delta + 256) % 256; // Wrap around 0-255
     this.updateSlotDisplay(this.selectedSlot);
+    if (this.soundManager) this.soundManager.playTerminalKey();
   }
 
   formatHex(value, digits) {

@@ -43,7 +43,6 @@ export class LockpickScene extends Phaser.Scene {
       });
       return;
     }
-
     const centerX = this.cameras.main.width / 2;
     const centerY = this.cameras.main.height / 2;
 
@@ -98,7 +97,7 @@ export class LockpickScene extends Phaser.Scene {
     this.container.add(instructions);
 
     const hint = this.add
-      .text(0, 195, "[A/D  oder  ← →] Drehen   [SPACE] Halten", {
+      .text(0, 220, "[A/D  oder  ← →] Drehen   [SPACE] Halten", {
         fontFamily: "VT323",
         fontSize: "24px",
         color: "#ffff00",
@@ -120,11 +119,11 @@ export class LockpickScene extends Phaser.Scene {
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 195, "[ ABBRECHEN ]", {
+      .text(0, 190, "[ ABBRECHEN ]", {
         fontFamily: "VT323",
         fontSize: "20px",
         color: "#ff0000",
-        padding: { x: 12, y: 6 }
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });
@@ -359,7 +358,10 @@ export class LockpickScene extends Phaser.Scene {
 
     // Sound/Flash Effekt
     this.cameras.main.flash(100, 0, 255, 0);
-    this.soundManager.playSuccess(); // Play success sound for unlocking a pin
+    if (this.soundManager) {
+        this.soundManager.playLockClick();
+        this.soundManager.playSuccess();
+    }
 
     if (this.currentPin >= this.pinsToUnlock) {
       // Alle Pins geknackt!

@@ -107,7 +107,7 @@ export class SimonSaysScene extends Phaser.Scene {
 
     // Status Text
     this.statusText = this.add
-      .text(0, 175, "INITIALISIERUNG...", {
+      .text(0, 160, "INITIALISIERUNG...", {
         fontFamily: "VT323",
         fontSize: "24px",
         color: "#ffffff",
@@ -118,7 +118,7 @@ export class SimonSaysScene extends Phaser.Scene {
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 205, "[ ABBRECHEN ]", {
+      .text(0, 190, "[ ABBRECHEN ]", {
         fontFamily: "VT323",
         fontSize: "20px",
         color: "#ff0000",
@@ -155,7 +155,7 @@ export class SimonSaysScene extends Phaser.Scene {
         if (this.inputActive) {
           this.handleInput(c.id);
           this.flashButton(btn);
-          this.soundManager.playHit();
+          if (this.soundManager) this.soundManager.playSimonTone((c.id % 4) + 1);
         }
       });
 
@@ -194,6 +194,9 @@ export class SimonSaysScene extends Phaser.Scene {
     const btn = this.buttons.find((b) => b.colorData.id === btnId);
 
     this.flashButton(btn, () => {
+      // Sound beim Zeigen abspielen
+      if (this.soundManager) this.soundManager.playSimonTone((btnId % 4) + 1);
+      
       // Geschwindigkeit leicht erhöhen bei höheren Leveln
       const delay = Math.max(150, 400 - this.round * 40);
       this.time.delayedCall(delay, () => {

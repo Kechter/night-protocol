@@ -88,11 +88,11 @@ export class TimingHackScene extends Phaser.Scene {
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 145, "[ ABBRECHEN ]", {
+      .text(0, 125, "[ ABBRECHEN ]", {
         fontFamily: "VT323",
         fontSize: "20px",
         color: "#ff0000",
-        padding: { x: 10, y: 5 },
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5)
       .setInteractive({ useHandCursor: true });

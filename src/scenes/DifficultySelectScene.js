@@ -73,9 +73,9 @@ export class DifficultySelectScene extends Phaser.Scene {
     this.add
       .text(W / 2, H - 40, "[KLICKEN] Auswählen", {
         fontFamily: "VT323",
-        fontSize: "22px",
+        fontSize: "26px",
         color: "#444444",
-        padding: { x: 10, y: 5 }
+        padding: { x: 15, y: 10 }
       })
       .setOrigin(0.5);
 
@@ -195,11 +195,11 @@ export class DifficultySelectScene extends Phaser.Scene {
     const container = this.add.container(x, y);
 
     this.add
-      .text(0, -30, "-- GAME SETTINGS --", {
+      .text(0, -35, "-- SPIEL-EINSTELLUNGEN --", {
         fontFamily: "VT323",
-        fontSize: "16px",
+        fontSize: "20px",
         color: "#555555",
-        padding: { x: 5, y: 5 }
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
 
@@ -259,11 +259,11 @@ export class DifficultySelectScene extends Phaser.Scene {
 
     // Fullscreen Hint
     const hint = this.add
-      .text(0, 70, "[F11] Vollbild empfohlen für das beste Erlebnis", {
+      .text(0, 90, "[F11] Vollbild empfohlen für das beste Erlebnis", {
         fontFamily: "VT323",
-        fontSize: "16px",
+        fontSize: "18px",
         color: "#555555",
-        padding: { x: 5, y: 5 }
+        padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
     container.add(hint);

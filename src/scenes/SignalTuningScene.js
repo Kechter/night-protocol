@@ -177,7 +177,7 @@ export class SignalTuningScene extends Phaser.Scene {
     });
     btn.on("pointerdown", () => {
       btn.isDown = true;
-      this.soundManager.playClick();
+      // Removed click sound per user request (too much in tuning game)
     });
     btn.on("pointerup", () => {
       btn.isDown = false;
@@ -202,7 +202,10 @@ export class SignalTuningScene extends Phaser.Scene {
 
     if (this.buttons) {
       this.buttons.forEach((btn) => {
-        if (btn.isDown) btn.updateCallback(delta);
+        if (btn.isDown) {
+            btn.updateCallback(delta);
+            // Removed terminal key ticking per user request
+        }
       });
     }
 
@@ -272,11 +275,12 @@ export class SignalTuningScene extends Phaser.Scene {
     if (this.isWon) return;
     this.isWon = true; // Sperrt weitere Updates
 
-    // FIX: Kein this.scene.pause() mehr!
-
-    this.matchText.setText("SIGNAL LOCKED - ACCESS GRANTED");
+    this.matchText.setText("SIGNAL KORREKT - ZUGRIFF ERLAUBT");
     this.container.first.setStrokeStyle(4, 0x00ff00);
-    this.soundManager.playSuccess();
+    if (this.soundManager) {
+        this.soundManager.playSignalLock();
+        this.soundManager.playSuccess();
+    }
 
     // Jetzt läuft die Zeit weiter und dieser Call feuert:
     this.time.delayedCall(1000, () => {

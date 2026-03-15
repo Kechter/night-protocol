@@ -73,7 +73,7 @@ export class PatternUnlockScene extends Phaser.Scene {
 
     // Status
     this.statusText = this.add
-      .text(0, 175, "MUSTER BEOBACHTEN", {
+      .text(0, 160, "MUSTER BEOBACHTEN", {
         fontFamily: "VT323",
         fontSize: "24px",
         color: "#ffffff",
@@ -84,7 +84,7 @@ export class PatternUnlockScene extends Phaser.Scene {
 
     // Abort Button
     const abortBtn = this.add
-      .text(0, 205, "[ ABBRECHEN ]", {
+      .text(0, 190, "[ ABBRECHEN ]", {
         fontFamily: "VT323",
         fontSize: "20px",
         color: "#ff0000",

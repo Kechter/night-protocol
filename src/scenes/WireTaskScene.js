@@ -241,7 +241,7 @@ export class WireTaskScene extends Phaser.Scene {
     endSocket.setStrokeStyle(2, 0xffffff); // Visuelles Feedback
 
     this.connections++;
-    this.soundManager.playHit();
+    if (this.soundManager) this.soundManager.playSpark();
 
     if (this.connections >= this.totalWires) {
       this.time.delayedCall(500, () => this.winGame());

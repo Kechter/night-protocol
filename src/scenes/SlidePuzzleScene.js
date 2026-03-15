@@ -240,6 +240,8 @@ export class SlidePuzzleScene extends Phaser.Scene {
         this.currentState[emptyIdx],
       ];
 
+      if (this.soundManager) this.soundManager.playSlide();
+
       // Einfachste Methode: Alles neu zeichnen
       this.createTiles();
       this.checkWin();
@@ -255,6 +257,7 @@ export class SlidePuzzleScene extends Phaser.Scene {
       this.inputActive = false;
       this.isComplete = true;
       if (this.timerEvent) this.timerEvent.remove();
+      if (this.soundManager) this.soundManager.playSuccess();
 
       this.tiles.forEach((t) => {
         t.container.list[0].setFillStyle(0x00ff00);
@@ -262,7 +265,7 @@ export class SlidePuzzleScene extends Phaser.Scene {
       });
 
       const winText = this.add
-        .text(0, 205, "DEFRAGMENTATION COMPLETE", {
+        .text(0, 205, "DEFRAGMENTIERUNG ABGESCHLOSSEN", {
           fontFamily: "VT323",
           fontSize: "24px",
           color: "#00ff00",
