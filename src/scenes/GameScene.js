@@ -32,6 +32,7 @@ export class GameScene extends Phaser.Scene {
     this.createCamera();
     this.createLighting(); // NEW: Atmospheric lighting
     this.setupEventListeners(); // NEW: Event System für PC-Hacks
+    this.createBranding(); // NEW: Add Ohm logos to the university walls
 
     // Speedrun Mode timing
     if (Config.speedrunMode) {
@@ -584,5 +585,14 @@ export class GameScene extends Phaser.Scene {
 
   createLighting() {
     this.lightingSystem = new LightingSystem(this, this.player);
+  }
+
+  createBranding() {
+    // Ein zentrales Logo auf dem Boden im Eingangsbereich
+    const logo = this.add.image(800, 1360, "ohm_logo")
+      .setScale(0.1)
+      .setAlpha(0.4)
+      .setDepth(0.5) // Unter den Wänden, über dem Boden
+      .setTint(0xaaaaaa); // Dezent im Boden-Look
   }
 }

@@ -32,6 +32,19 @@ export class ControlsScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
+    // Ohm Logo top right
+    const logoScale = 0.15;
+    this.add.image(W - 60, 60, "ohm_logo")
+      .setScale(logoScale)
+      .setAlpha(0.8)
+      .setOrigin(0.5);
+    
+    // Optional: Subtle white circle behind if the logo is too dark on black
+    this.add.graphics()
+      .fillStyle(0xffffff, 0.05)
+      .fillCircle(W - 60, 60, 45)
+      .setDepth(-1);
+
     this.add
       .text(W / 2, 108, "STEUERUNG", {
         fontFamily: "VT323",

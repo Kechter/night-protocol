@@ -59,6 +59,9 @@ export class PreloadScene extends Phaser.Scene {
     this.load.audio("timer_tick", "assets/sounds/timer_tick.wav");
     this.load.audio("alarm_loop", "assets/sounds/alarm_loop_v2.wav");
     this.load.audio("pickup", "assets/sounds/pickup_item.wav");
+    
+    // --- 4. BRANDING ---
+    this.load.image("ohm_logo", "assets/ohm_logo.png");
   }
 
   create() {

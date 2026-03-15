@@ -41,6 +41,17 @@ export class DifficultySelectScene extends Phaser.Scene {
         padding: { x: 10, y: 5 }
       })
       .setOrigin(0.5);
+    
+    // Ohm Logo top right
+    this.add.image(W - 60, 60, "ohm_logo")
+      .setScale(0.15)
+      .setAlpha(0.8)
+      .setOrigin(0.5);
+
+    this.add.graphics()
+      .fillStyle(0xffffff, 0.05)
+      .fillCircle(W - 60, 60, 45)
+      .setDepth(-1);
 
     this.add
       .text(W / 2, 108, "SCHWIERIGKEITSGRAD", {
