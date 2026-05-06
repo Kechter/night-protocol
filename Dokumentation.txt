@@ -1,0 +1,197 @@
+Mein aktueller Stand: 
+
+Erstellt von Jonathan Kechter, zuletzt aktualisiert am 15. März 2026  Lesedauer: 4 Minute(n)
+1. Konzept: Night Protocol
+"Night Protocol" ist ein Top-Down Stealth-Adventure. Das Szenario versetzt den Spieler in die Rolle eines Studenten, der nachts in der geschlossenen Technischen Hochschule eingeschlossen wird. Das Ziel ist es, einen Ausweg zu finden, ohne von den Campus Security Bots entdeckt zu werden. Die Atmosphäre im Spiel ist mysteriös, dunkel und technisch geprägt.
+
+1.1. Game Loop
+Der Spieler steuert den Protagonisten aus einer Vogelperspektive durch verschiedene Trakte der Hochschule (Labore, Flure, Aula).
+
+1.1.1. Steuerung & Kamera
+Die Steuerung und Kameraführung sind darauf ausgelegt, die Übersicht einzuschränken und die Spannung zu erhöhen.
+
+Eingabe: Steuerung via Pfeiltasten oder WASD. Diagonale Bewegungen werden automatisch normalisiert, um unbeabsichtigte Geschwindigkeitsvorteile zu verhindern.
+
+Licht: Mit der Taste 'L' kann die Taschenlampe (Atmosphäre/Debug) getoggled werden.
+
+Kamera-Verhalten: Die Kamera folgt dem Spieler mit einer weichen Interpolation ("Smooth Follow": 0.1). Ein hoher Zoom-Faktor von 4.5x fokussiert den Bildausschnitt auf den aktuellen Raum. Dies verstärkt die Stealth-Atmosphäre ("Fog of War"-Gefühl), da der Spieler nicht die gesamte Map überblicken kann. Die Kameragrenzen (Bounds) entsprechen exakt der Map-Größe.
+
+1.1.2. Stealth-Mechanik & KI
+Das Kernelement ist das Vermeiden von direktem Sichtkontakt mit den Sicherheitsrobotern. Diese patrouillieren auf festen Routen und verfügen über einen definierten Sichtkegel.
+
+Dynamische KI-Zustände:
+
+Patrol: Standard-Patrouille auf definierten Wegen.
+
+Chase: Bei Sichtkontakt wird der Eindringling aktiv verfolgt.
+
+Search & Return (Breadcrumb-System): Verliert der Bot den Sichtkontakt, geht er in den Suchmodus über. Hierbei kehrt er nicht direkt linear zurück, sondern nutzt ein Breadcrumb-System: Während der Verfolgung legt der Bot alle 40 Pixel unsichtbare Marker auf dem Tile-Grid (16x16) ab. Im Return-Status läuft er diese Spur rückwärts ab (LIFO-Prinzip), was ein realistisches "Abdrehen" und Zurückgehen simuliert.
+
+Anti-Stuck: Eine integrierte Logik verhindert, dass Bots an Ecken oder Hindernissen hängenbleiben.
+
+1.1.3. Interaktionssystem
+Um voranzukommen, muss der Spieler Terminals erreichen, Türen öffnen und Items sammeln.
+
+Schlüssel & Türen: Es gibt vier farbcodierte Schlüsseltypen (Rot, Blau, Grün, Gelb). Türen besitzen drei mögliche Zustände:
+
+Offen: Keine Interaktion nötig.
+
+Verschlossen: Benötigt den passenden Schlüssel im Inventar (visueller Indikator: schwebendes Schloss-Icon).
+
+Gesichert: Benötigt das Lösen eines Minigames (Hacking).
+
+Feedback: Beim Öffnen einer Tür wird die Tile-Collision an dieser Stelle dynamisch entfernt.
+
+1.1.4. Fail State
+Wird der Spieler im Sichtkegel eines Bots entdeckt und von ihm gefangen (Kollision), gilt das Level als gescheitert.
+
+1.2. Assets & Visuelle Identität
+Die visuelle Gestaltung soll die beklemmende Atmosphäre einer leeren Hochschule bei Nacht einfangen.
+
+1.2.1. Herausforderung & Lösung
+Die Suche nach kostenlosen Assets ("Free Assets") erwies sich als problematisch (Stilbrüche, Fantasy-Setting). Auch Generative AI scheiterte an der Konsistenz der Pixel-Art-Perspektive. Finale Lösung: Lizenzierung eines hochwertigen Tilesets ("Modern Office/University"), um einheitliche Farbpaletten und sauberes Tiling zu gewährleisten. Dies erlaubte den Fokus auf Gameplay statt Grafik-Erstellung.
+
+1.3. Entwicklungsprozess & Pipeline
+1.3.1. KI-Workflow & Tool-Evolution
+Der Entwicklungsprozess wurde durch eine gezielte Evolution der genutzten KI-Werkzeuge optimiert, um die Effizienz und Code-Qualität schrittweise zu steigern:
+
+Initialphase (ChatGPT): Zu Beginn wurden Standard-Chats genutzt, um isolierte Probleme zu lösen und erste Code-Snippets zu generieren.
+
+Modell-Upgrade (Gemini Advanced): Der Wechsel zu Gemini erfolgte aufgrund der Verfügbarkeit der Pro-Version (Studenten-Lizenz). Das leistungsfähigere Modell ermöglichte komplexere Problemlösungen und logische Verknüpfungen.
+
+Kontext-Management (Gemini Gems): Einführung von "Gems" (benutzerdefinierte KI-Instanzen). Durch das Hinterlegen von dauerhaften Projekt-Informationen (Tech-Stack, Design-Patterns) musste der Kontext nicht für jeden Chat neu erstellt werden, was den Workflow beschleunigte.
+
+Full-Context Coding (Antigravity): Der finale Schritt war der Wechsel zu "Antigravity" als Coding Agent.
+
+Codebase Awareness: Im Gegensatz zu herkömmlichen Chats erfasst dieser Agent die gesamte Codebasis. Er versteht Abhängigkeiten zwischen verschiedenen Dateien und Modulen.
+
+Ideen-Umsetzung: Dies ermöglichte es, abstrakte Ideen direkt in funktionierenden, modularen Code umzuwandeln, ohne Kontextverluste zu erleiden. Der Agent agiert als "Pair Programmer", der den Überblick über die gesamte Architektur behält.
+
+1.3.2. Phase 1: Der Prototyp
+Implementierung der Kernmechaniken in einer isolierten Umgebung ("GameScene"):
+
+Entwicklung der SecurityBot-Klasse (State Machine).
+
+Implementierung der Sichtkegel-Berechnung (Raycasting).
+
+1.3.3. Phase 2: Map Building & Level Design
+Erstellung der Spielwelt mittels Tiled. Die Tilemap (test.json) nutzt 5 Layer für Tiefe (Boden, Wände, Wände_Oben, Deko_Low, Deko_High).
+
+Level-Struktur (Linear): Startbereich -> Verwaltung -> Lern-Sektor (Bib/Coworking) -> Campus-Mitte (Vorlesungssaal/WC) -> IT-Trakt -> Serverraum (Ziel).
+
+Performance & Kollision:
+
+Optimierung: Es werden zwei separate Layer für Kollisionen genutzt (Walls + Decoration).
+
+Blacklist-Ansatz: Kollisionen werden effizient über Tile-ID-Ausschlussverfahren berechnet (Ignorieren von IDs wie -1, 0, 72).
+
+Visuelle Tiefe: Der Topwall-Layer hat bewusst keine Kollision, um räumliche Tiefe zu erzeugen (Spieler kann "hinter" Wandkronen laufen).
+
+1.3.4. Phase 3: Integration & Refactoring (Aktueller Stand)
+Verknüpfung der Logik mit der finalen Map und Umstellung auf eine modulare Architektur.
+
+Architektur-Details: Das Projekt wurde in eine saubere Ordnerstruktur gegliedert:
+
+/entities: Player, SecurityBot, Door, KeyItem, Computer.
+
+/scenes: GameScene, UIScene, PreloadScene sowie 6 separate Minigame-Scenes.
+
+/systems: LightingSystem, InventoryManager.
+
+/utils: Constants.js für zentrale Konfiguration (Physics, Bot-States, Layer-Depth, Key-Config).
+
+KI-Polishing: Finalisierung der Zustandsübergänge (Patrol -> Chase -> Search -> Return) und Glättung der Navigation.
+
+1.3.5. Phase 4: Minigame-Implementierung
+Minigames dienen als Hürde ("Pacing-Breaker") und sind inspiriert von Among Us. Sie laufen technisch als Overlay-Szenen (scene.launch), pausieren das Hauptspiel und liefern das Ergebnis via Callback (onResult).
+
+Minigame-Übersicht:
+
+WireTask: Verbinde 4 farbige Kabel mit den korrekten Anschlüssen.
+
+SimonSays: Merke dir eine Blink-Sequenz und wiederhole sie.
+
+TimingHack: Stoppe einen Indikator exakt in der grünen Zone.
+
+PatternUnlock: Zeichne ein vorgegebenes Muster (wie Android-Entsperrung).
+
+SlidePuzzle: Klassisches 15-Puzzle (Zahlen verschieben).
+
+SignalTuning: Finde die korrekte Frequenz mittels Slider/Dial-Mechanik.
+
+Balancing: Aktuell zu Testzwecken an vielen Türen aktiv. Im finalen Spiel logisch auf Server-Racks und Hochsicherheitsbereiche beschränkt.
+
+1.3.6. Phase 5: Atmosphäre & Sichtsystem (Lighting)
+Die Erzeugung einer glaubwürdigen Nachtatmosphäre stellte eine technische Herausforderung dar.
+
+Lösung: Ein globaler destination-out Gradient ("Sichtkreis") auf einem schwarzen Overlay simuliert Dunkelheit und Taschenlampe.
+
+Performance Trade-off: Es wird bewusst auf dynamischen Schattenwurf durch Wände verzichtet, da dies für das Canvas-Rendering zu rechenintensiv wäre. Stattdessen wird der Licht-Effekt via Off-Screen Canvas effizient pro Frame aktualisiert. Dies hält die Performance stabil, auch auf schwächerer Hardware.
+
+Student  1 :
+1. Introduction
+2.  Game Idea 
+2.1. Point-based Orb System
+2.2. Win / Lose Conditions
+2.3. Difficulty & Progression
+2.4. Controls 
+2.5. Combat System
+3. World and Story
+3.1. Characters 
+3.2.  Items & The Arsenal
+3.3. Level Overview
+4. Vibe Coding Experience
+4.1. Phase 1 — Prototyping with ChatGPT (Single Chat)
+4.2. Phase 2 — Asset Generation
+4.3. Phase 3 — Feature Expansion with ChatGPT Projects
+4.4. Phase 4 — Modularization
+4.5. Phase 5 — Enemy AI Development and the Agentic AI Experiment
+4.6. Phase 6 — Recovery and the Summary-Chain Workflow
+4.7. Phase 7 — Final Feature Implementation with Claude Code (Agentic Mode)
+4.8. Summary
+5. Known Issues & Further Work
+5.1. Disappearing Floor 
+5.2. Jump-Cancel Orb Farming Exploit
+5.3. Phantom Transparency After Item Use
+5.4. Enemy AI Requires Further Balancing
+6. Technical Documentation
+6.1. Architecture Overview
+6.2. Scene Flow & Game Loop
+6.3. Class Hierarchy & Object Relationships
+6.4. Per-File Reference
+6.5. Configuration Tuning Guide
+6.6. How to Add New Functionality
+
+Student 2: 
+
+1. Concept
+1.1. Setting
+1.2. Style
+2. Assets
+2.1. Icons
+2.2. Location Background 
+2.2.1. AI Approach
+2.2.2. Manual Approach
+2.2.3. Pipeline Approach
+2.2.4. Results
+3.  UI Design
+4. Game Map
+5. Development with AI 
+5.1. Development Philosophy
+5.2. Memorable AI Interactions
+5.2.1. UI design of inventory
+5.2.2. Inventory split
+6. Technical Documentation
+6.1. Directories
+6.2. Managers
+6.2.1. Inventory Manager
+6.2.2. Pop-Up Manager
+6.2.3. Sound Manager
+6.2.4. Backtrack Manager
+6.3. Scenes
+6.3.1. Base Scene
+6.3.2. Map Location Scenes
+6.3.3. UI Scenes
+6.3.4. BootScene & EndScene
+6.4. Rendering Pipeline
+6.5. Known Issues & Further Work
